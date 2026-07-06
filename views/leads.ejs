@@ -1,0 +1,1066 @@
+<%- include('partials/header') %>
+    <%- include('partials/sidebar') %>
+
+        <div class="w-full min-w-0 overflow-x-hidden">
+            <div class="safe-container mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px]">
+                <header class="min-w-0 w-full">
+                    <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between min-w-0">
+                        <div class="min-w-0 flex-1">
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 safe-truncate">Leads CRM</h1>
+                            <p class="text-slate-500 mt-1 text-sm sm:text-base safe-truncate">35 total · 35 shown</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full xl:w-auto xl:justify-end min-w-0">
+                            <a class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-semibold hover:bg-amber-100 transition-colors"
+                                href="/admin/follow-ups" data-discover="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-bell h-4 w-4 shrink-0" aria-hidden="true">
+                                    <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+                                    <path
+                                        d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326">
+                                    </path>
+                                </svg><span class="whitespace-nowrap">11 follow-ups</span></a>
+                            <button id="openModalBtn"
+                                class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-gradient-to-r from-[#FF6B2C] to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:scale-[1.02] h-9 px-3 text-xs rounded-xl brand-gradient border-0 text-white whitespace-nowrap"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-plus h-4 w-4" aria-hidden="true">
+                                    <path d="M5 12h14"></path>
+                                    <path d="M12 5v14"></path>
+                                </svg> Add Lead
+                            </button>
+                            <button
+                                class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-upload h-4 w-4" aria-hidden="true">
+                                    <path d="M12 3v12"></path>
+                                    <path d="m17 8-5-5-5 5"></path>
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                </svg> Import Leads</button><button
+                                class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-download h-4 w-4" aria-hidden="true">
+                                    <path d="M12 15V3"></path>
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <path d="m7 10 5 5 5-5"></path>
+                                </svg> Export CSV</button>
+                        </div>
+                    </div>
+                </header>
+                <section class="grid gap-4 min-w-0 w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+                    <div
+                        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between gap-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Total Leads</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">35</p>
+                            </div>
+                            <div
+                                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-blue-600 to-cyan-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-users h-5 w-5 text-white"
+                                    aria-hidden="true">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <path d="M16 3.128a4 4 0 0 1 0 7.744"></path>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between gap-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Hot Leads</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">28</p>
+                            </div>
+                            <div
+                                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-red-500 to-rose-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-flame h-5 w-5 text-white"
+                                    aria-hidden="true">
+                                    <path
+                                        d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between gap-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">New Leads</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">4</p>
+                            </div>
+                            <div
+                                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-purple-500 to-pink-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-sparkles h-5 w-5 text-white"
+                                    aria-hidden="true">
+                                    <path
+                                        d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z">
+                                    </path>
+                                    <path d="M20 2v4"></path>
+                                    <path d="M22 4h-4"></path>
+                                    <circle cx="4" cy="20" r="2"></circle>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between gap-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Today Follow-ups
+                                </p>
+                                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">1</p>
+                            </div>
+                            <div
+                                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-amber-500 to-orange-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-bell h-5 w-5 text-white"
+                                    aria-hidden="true">
+                                    <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+                                    <path
+                                        d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <div
+                    class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 !p-4">
+                    <div class="flex flex-col gap-3 min-w-0">
+                        <div class="relative min-w-0 w-full"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0"
+                                aria-hidden="true">
+                                <path d="m21 21-4.34-4.34"></path>
+                                <circle cx="11" cy="11" r="8"></circle>
+                            </svg><input
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10 min-w-0 w-full"
+                                placeholder="Search name, phone, location..." value=""></div>
+                        <div
+                            class="min-w-0 [&amp;_select]:min-w-0 [&amp;_select]:w-full [&amp;_input]:min-w-0 [&amp;_button]:min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <select
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                                <option value="">All Status</option>
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="interested">Interested</option>
+                                <option value="site_visit_scheduled">Site Visit Scheduled</option>
+                                <option value="site_visit_completed">Site Visit Completed</option>
+                                <option value="negotiation">Negotiation</option>
+                                <option value="booking_pending">Booking Pending</option>
+                                <option value="booked">Booked</option>
+                                <option value="payment_running">Payment Running</option>
+                                <option value="sold">Sold</option>
+                                <option value="lost">Lost</option>
+                            </select><select
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                                <option value="">All Sources</option>
+                                <option value="website">website</option>
+                                <option value="facebook">facebook</option>
+                                <option value="google">google</option>
+                                <option value="whatsapp">whatsapp</option>
+                                <option value="phone">phone</option>
+                                <option value="referral">referral</option>
+                                <option value="walk_in">walk in</option>
+                            </select><select
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                                <option value="">Priority</option>
+                                <option value="hot">Hot</option>
+                                <option value="warm">Warm</option>
+                                <option value="cold">Cold</option>
+                            </select><select
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                                <option value="">All Employees</option>
+                                <option value="emp-1">Rahim Uddin</option>
+                                <option value="emp-2">Fatima Akter</option>
+                                <option value="emp-3">Karim Hassan</option>
+                                <option value="emp-4">Nusrat Jahan</option>
+                                <option value="emp-5">Sakib Ahmed</option>
+                                <option value="emp-6">Tasnim Rahman</option>
+                                <option value="emp-7">Mahmud Hasan</option>
+                            </select><select
+                                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                                <option value="">Property Type</option>
+                                <option value="apartment">Apartment</option>
+                                <option value="ready_flat">Ready Flat</option>
+                                <option value="plot">Land / Plot</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="upcoming_project">Upcoming Project</option>
+                            </select><button
+                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-11 px-5 py-2 min-w-0 w-full sm:w-auto rounded-xl">Show
+                                Deleted</button>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="hidden lg:block min-w-0">
+                    <div class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="w-full min-w-0 overflow-x-auto">
+                            <table class="w-full text-sm table-fixed" style="min-width: 900px;">
+                                <colgroup>
+                                    <col class="w-auto">
+                                    <col class="w-auto">
+                                    <col class="w-[130px]">
+                                    <col class="w-[140px]">
+                                    <col class="w-[140px]">
+                                    <col class="w-[100px]">
+                                    <col class="w-[150px]">
+                                    <col class="w-auto">
+                                    <col class="w-[130px]">
+                                </colgroup>
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
+                                        <th class="text-left p-3 font-semibold">Lead ID</th>
+                                        <th class="text-left p-3 font-semibold">Customer</th>
+                                        <th class="text-left p-3 font-semibold">Phone</th>
+                                        <th class="text-left p-3 font-semibold">Location</th>
+                                        <th class="text-left p-3 font-semibold">Status</th>
+                                        <th class="text-left p-3 font-semibold">Priority</th>
+                                        <th class="text-left p-3 font-semibold">Employee</th>
+                                        <th class="text-left p-3 font-semibold">Latest Note</th>
+                                        <th
+                                            class="text-left p-3 font-semibold sticky right-0 z-10 bg-slate-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% leads.forEach(lead=> { %>
+                                        <tr class="border-t border-slate-100 hover:bg-slate-50/80 transition-colors">
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0"><span class="font-mono text-[11px] text-slate-500">
+                                                        <%= lead._id %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0"><span
+                                                        class="font-medium text-slate-900 safe-truncate block">
+                                                        <%= lead.customerName %>
+                                                    </span></div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0"><span class="text-slate-600 whitespace-nowrap">
+                                                        <%= lead.phone %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0"><span class="safe-truncate block text-slate-600">
+                                                        <%= lead.preferredLocation || '—' %>
+                                                    </span></div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0">
+                                                    <span
+                                                        class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium whitespace-nowrap bg-blue-100 text-blue-700 border-blue-200">
+                                                        <%= lead.status %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0">
+                                                    <span
+                                                        class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium capitalize whitespace-nowrap bg-amber-100 text-amber-700 border-amber-200">
+                                                        <%= lead.priority %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0">
+                                                <div class="min-w-0"><span
+                                                        class="safe-truncate block text-slate-600 text-xs">—</span>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 align-middle min-w-0 max-w-0">
+                                                <div class="min-w-0 safe-truncate">
+                                                    <span class="text-xs text-slate-500 block safe-truncate"
+                                                        title="<%= lead.messageNote %>">
+                                                        <%= lead.messageNote || '—' %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="p-3 align-middle min-w-0 sticky right-0 z-10 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-0.5 shrink-0">
+                                                        <a title="View" href="/admin/leads/<%= lead._id %>">
+                                                            <button
+                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="lucide lucide-eye h-3.5 w-3.5"
+                                                                    aria-hidden="true">
+                                                                    <path
+                                                                        d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0">
+                                                                    </path>
+                                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                                </svg>
+                                                            </button>
+                                                        </a>
+                                                        <button
+                                                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
+                                                            title="Edit"
+                                                            onclick='openEditModal(<%- JSON.stringify(lead) %>)'>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="lucide lucide-pencil h-3.5 w-3.5"
+                                                                aria-hidden="true">
+                                                                <path
+                                                                    d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                                                </path>
+                                                                <path d="m15 5 4 4"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <a href="tel:<%= lead.phone %>" title="Call">
+                                                            <button
+                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="lucide lucide-phone h-3.5 w-3.5"
+                                                                    aria-hidden="true">
+                                                                    <path
+                                                                        d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384">
+                                                                    </path>
+                                                                </svg>
+                                                            </button>
+                                                        </a>
+                                                        <a href="https://wa.me/<%= lead.phone.replace(/[^0-9]/g, '') %>"
+                                                            target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                                                            <button
+                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="lucide lucide-message-circle h-3.5 w-3.5 text-emerald-600"
+                                                                    aria-hidden="true">
+                                                                    <path
+                                                                        d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719">
+                                                                    </path>
+                                                                </svg>
+                                                            </button>
+                                                        </a>
+                                                        <button
+                                                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
+                                                            title="Delete" onclick="openDeleteModal('<%= lead._id %>')">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="lucide lucide-trash-2 h-3.5 w-3.5 text-red-500"
+                                                                aria-hidden="true">
+                                                                <path d="M10 11v6"></path>
+                                                                <path d="M14 11v6"></path>
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6">
+                                                                </path>
+                                                                <path d="M3 6h18"></path>
+                                                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                            <% if(leads.length===0) { %>
+                                                <tr>
+                                                    <td colspan="9" class="text-center py-8 text-slate-400">No leads
+                                                        found.</td>
+                                                </tr>
+                                                <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Card View (lg:hidden) -->
+                <div class="lg:hidden space-y-3 min-w-0">
+                    <% leads.forEach(lead=> { %>
+                        <div
+                            class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                            <div class="flex items-start justify-between gap-2 min-w-0 mb-2">
+                                <div class="min-w-0 flex-1">
+                                    <h3 class="font-semibold text-slate-900 safe-truncate">
+                                        <%= lead.customerName %>
+                                    </h3>
+                                    <p class="text-sm text-slate-500 safe-truncate mt-0.5">
+                                        <%= lead.phone %> · <%= lead.preferredLocation || 'No Location' %>
+                                    </p>
+                                </div>
+                                <span
+                                    class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium whitespace-nowrap bg-blue-100 text-blue-700 border-blue-200">
+                                    <%= lead.status %>
+                                </span>
+                            </div>
+                            <div class="text-sm text-slate-600 mb-3 min-w-0">
+                                <div class="flex flex-wrap gap-2 items-center">
+                                    <span
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium capitalize whitespace-nowrap bg-amber-100 text-amber-700 border-amber-200">
+                                        <%= lead.priority %>
+                                    </span>
+                                    <span class="text-xs text-slate-500">—</span>
+                                    <span class="text-xs text-slate-400 safe-truncate w-full"
+                                        title="<%= lead.messageNote %>">
+                                        <%= lead.messageNote || 'No notes added.' %>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                                <div class="flex items-center gap-0.5 shrink-0">
+                                    <a title="View" href="/admin/leads/<%= lead._id %>">
+                                        <button
+                                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-eye h-3.5 w-3.5" aria-hidden="true">
+                                                <path
+                                                    d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0">
+                                                </path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </a>
+                                    <button
+                                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
+                                        title="Edit" onclick='openEditModal(<%- JSON.stringify(lead) %>)'>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="lucide lucide-pencil h-3.5 w-3.5" aria-hidden="true">
+                                            <path
+                                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                            </path>
+                                            <path d="m15 5 4 4"></path>
+                                        </svg>
+                                    </button>
+                                    <a href="tel:<%= lead.phone %>" title="Call">
+                                        <button
+                                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-phone h-3.5 w-3.5" aria-hidden="true">
+                                                <path
+                                                    d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </a>
+                                    <a href="https://wa.me/<%= lead.phone.replace(/[^0-9]/g, '') %>" target="_blank"
+                                        rel="noopener noreferrer" title="WhatsApp">
+                                        <button
+                                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-message-circle h-3.5 w-3.5 text-emerald-600"
+                                                aria-hidden="true">
+                                                <path
+                                                    d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </a>
+                                    <button
+                                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
+                                        title="Delete" onclick="openDeleteModal('<%= lead._id %>')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="lucide lucide-trash-2 h-3.5 w-3.5 text-red-500" aria-hidden="true">
+                                            <path d="M10 11v6"></path>
+                                            <path d="M14 11v6"></path>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                            <path d="M3 6h18"></path>
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                            <% if(leads.length===0) { %>
+                                <div
+                                    class="text-center py-8 text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                                    No leads found.</div>
+                                <% } %>
+                </div>
+
+
+
+
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 min-w-0">
+                    <!-- Showing X–Y of Z text calculation -->
+                    <p class="text-sm text-slate-500">
+                        Showing
+                        <%= totalLeads===0 ? 0 : (currentPage - 1) * limit + 1 %>–<%= Math.min(currentPage * limit,
+                                totalLeads) %>
+                                of <%= totalLeads %>
+                    </p>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Previous Button -->
+                        <% if (currentPage> 1) { %>
+                            <a href="?page=<%= currentPage - 1 %>">
+                                <button
+                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 rounded-lg px-3 text-xs">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-chevron-left h-4 w-4"
+                                        aria-hidden="true">
+                                        <path d="m15 18-6-6 6-6"></path>
+                                    </svg>
+                                </button>
+                            </a>
+                            <% } else { %>
+                                <button
+                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-9 rounded-lg px-3 text-xs"
+                                    disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-chevron-left h-4 w-4"
+                                        aria-hidden="true">
+                                        <path d="m15 18-6-6 6-6"></path>
+                                    </svg>
+                                </button>
+                                <% } %>
+
+                                    <!-- Page Indicator -->
+                                    <span class="text-sm whitespace-nowrap">Page <%= currentPage %> of <%= totalPages ||
+                                                1 %></span>
+
+                                    <!-- Next Button -->
+                                    <% if (currentPage < totalPages) { %>
+                                        <a href="?page=<%= currentPage + 1 %>">
+                                            <button
+                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 rounded-lg px-3 text-xs">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-chevron-right h-4 w-4" aria-hidden="true">
+                                                    <path d="m9 18 6-6-6-6"></path>
+                                                </svg>
+                                            </button>
+                                        </a>
+                                        <% } else { %>
+                                            <button
+                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-9 rounded-lg px-3 text-xs"
+                                                disabled>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-chevron-right h-4 w-4" aria-hidden="true">
+                                                    <path d="m9 18 6-6-6-6"></path>
+                                                </svg>
+                                            </button>
+                                            <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- পপআপ মোডাল (শুরুতে লুকানো থাকবে) -->
+        <div id="leadModal"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+
+            <!-- মোডাল কন্টেন্ট বক্স -->
+            <div
+                class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all scale-95 duration-300">
+
+                <!-- মোডাল হেডার -->
+                <div
+                    class="flex items-center justify-between border-b border-gray-200 px-6 py-4 sticky top-0 bg-white z-10">
+                    <h3 class="text-xl font-bold text-gray-800">নতুন গ্রাহকের তথ্য (Lead Form)</h3>
+                    <button id="closeModalBtn"
+                        class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+                </div>
+
+                <!-- মোডাল ফর্ম -->
+                <form action="/leads" method="POST" class="p-6 space-y-5">
+
+                    <!-- সেকশন ১: কাস্টমার সংক্রান্ত তথ্য -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">গ্রাহকের নাম <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" name="customerName" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ফোন নম্বর <span
+                                    class="text-red-500">*</span></label>
+                            <input type="tel" name="phone" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- সেকশন ২: প্রপার্টি সংক্রান্ত তথ্য -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">পছন্দের এলাকা (Location)</label>
+                            <input type="text" name="preferredLocation"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">প্রপার্টির ধরন <span
+                                    class="text-red-500">*</span></label>
+                            <select name="propertyType" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                <option value="Land Share">Land Share</option>
+                                <option value="Ready Flat">Ready Flat</option>
+                                <option value="Land / Plot">Land / Plot</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Upcoming Project">Upcoming Project</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- বাজেট, সাইজ ও বেডরুম -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">বাজেট Min (৳)</label>
+                            <input type="number" name="budgetMin" value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">বাজেট Max (৳)</label>
+                            <input type="number" name="budgetMax" value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">সাইজ (Sqft)</label>
+                            <input type="text" name="preferredSize" placeholder="e.g. 1200"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">বেডরুম</label>
+                            <input type="number" name="bedrooms" value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- সেকশন ৩: উদ্দেশ্য ও উৎস -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ক্রয়ের উদ্দেশ্য
+                                (Purpose)</label>
+                            <select name="purpose"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                <option value="">সিলেক্ট করুন</option>
+                                <option value="Own Living">Own Living</option>
+                                <option value="Investment">Investment</option>
+                                <option value="Rental Income">Rental Income</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">উৎস (Source) <span
+                                    class="text-red-500">*</span></label>
+                            <select name="source" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                <option value="website">Website</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="google">Google</option>
+                                <option value="whatsapp">Whatsapp</option>
+                                <option value="phone">Phone</option>
+                                <option value="referral">Referral</option>
+                                <option value="walk in">Walk In</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- সেকশন ৪: ট্র্যাকিং ও ফলো-আপ -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1"> can অগ্রধিকার
+                                (Priority)</label>
+                            <select name="priority"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                <option value="Warm">Warm</option>
+                                <option value="Hot">Hot</option>
+                                <option value="Cold">Cold</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">বর্তমান অবস্থা (Status)</label>
+                            <select name="status"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Interested">Interested</option>
+                                <option value="Site Visit Scheduled">Site Visit Scheduled</option>
+                                <option value="Site Visit Completed">Site Visit Completed</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Booking Pending">Booking Pending</option>
+                                <option value="Booked">Booked</option>
+                                <option value="Payment Running">Payment Running</option>
+                                <option value="Sold">Sold</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ফলো-আপ তারিখ</label>
+                            <input type="date" name="followUpDate"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- নোট/মন্তব্য -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">অতিরিক্ত নোট (Message Note)</label>
+                        <textarea name="messageNote" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                            placeholder="গ্রাহক সম্পর্কে কোনো বিশেষ মন্তব্য..."></textarea>
+                    </div>
+
+                    <!-- মোডাল ফুটার বাটন -->
+                    <div class="flex justify-end space-x-3 border-t border-gray-100 pt-4">
+                        <button type="button" id="cancelModalBtn"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">বাতিল</button>
+                        <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">সংরক্ষণ
+                            করুন (Save)</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- ==========================================
+     TAILWIND CSS MODAL: EDIT LEAD POPUP
+     ========================================== -->
+        <div id="editLeadModal"
+            class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div
+                class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col scale-95 transition-all duration-300">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Edit Lead Details</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">লিডের প্রয়োজনীয় তথ্য এখানে আপডেট করুন।</p>
+                    </div>
+                    <button onclick="closeEditModal()"
+                        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form Body -->
+                <form id="editLeadForm" method="POST" class="overflow-y-auto p-6 space-y-4 flex-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Customer Name *</label>
+                            <input type="text" name="customerName" id="edit_customerName" required
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Phone *</label>
+                            <input type="text" name="phone" id="edit_phone" required
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Location</label>
+                            <input type="text" name="preferredLocation" id="edit_preferredLocation"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Property Type</label>
+                            <select name="propertyType" id="edit_propertyType"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Property Type</option>
+                                <option value="apartment">Apartment</option>
+                                <option value="ready_flat">Ready Flat</option>
+                                <option value="plot">Land / Plot</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="upcoming_project">Upcoming Project</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Min</label>
+                            <input type="number" name="budgetMin" id="edit_budgetMin"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Max</label>
+                            <input type="number" name="budgetMax" id="edit_budgetMax"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Size (Sft)</label>
+                            <input type="text" name="preferredSize" id="edit_preferredSize"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Bedrooms</label>
+                            <input type="number" name="bedrooms" id="edit_bedrooms"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Purpose</label>
+                            <select name="purpose" id="edit_purpose"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Purpose</option>
+                                <option value="buy">Buy</option>
+                                <option value="rent">Rent</option>
+                                <option value="investment">Investment</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Source</label>
+                            <select name="source" id="edit_source"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Source</option>
+                                <option value="website">website</option>
+                                <option value="facebook">facebook</option>
+                                <option value="google">google</option>
+                                <option value="whatsapp">whatsapp</option>
+                                <option value="phone">phone</option>
+                                <option value="referral">referral</option>
+                                <option value="walk_in">walk in</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
+                            <select name="priority" id="edit_priority"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Priority</option>
+                                <option value="hot">Hot</option>
+                                <option value="warm">Warm</option>
+                                <option value="cold">Cold</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                            <select name="status" id="edit_status"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="interested">Interested</option>
+                                <option value="site_visit_scheduled">Site Visit Scheduled</option>
+                                <option value="site_visit_completed">Site Visit Completed</option>
+                                <option value="negotiation">Negotiation</option>
+                                <option value="booking_pending">Booking Pending</option>
+                                <option value="booked">Booked</option>
+                                <option value="payment_running">Payment Running</option>
+                                <option value="sold">Sold</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Follow Up Date</label>
+                            <input type="date" name="followUpDate" id="edit_followUpDate"
+                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Message / Note</label>
+                        <textarea name="messageNote" id="edit_messageNote" rows="3"
+                            class="w-full rounded-[10px] border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <!-- Footer Buttons -->
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                        <button type="button" onclick="closeEditModal()"
+                            class="px-4 py-2 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FF6B2C] to-amber-500 rounded-xl shadow-md hover:opacity-95 transition-all">Save
+                            Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==========================================
+     TAILWIND CSS MODAL: DELETE CONFIRMATION
+     ========================================== -->
+        <div id="deleteLeadModal"
+            class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div
+                class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md scale-95 transition-all duration-300 p-6 text-center">
+                <!-- Warning Icon -->
+                <div
+                    class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-6 w-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+
+                <!-- Modal Content -->
+                <h3 class="text-lg font-bold text-slate-900 mb-2">আপনি কি নিশ্চিত?</h3>
+                <p class="text-sm text-slate-500 mb-6">এই লিডটি চিরতরে ডিলিট হয়ে যাবে। এই অ্যাকশনটি কিন্তু আর ফিরিয়ে আনা
+                    (Undo) সম্ভব হবে না।</p>
+
+                <!-- Form acting as Delete Trigger -->
+                <form id="deleteLeadForm" method="POST">
+                    <div class="flex justify-center gap-3">
+                        <button type="button" onclick="closeDeleteModal()"
+                            class="px-4 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors w-full">
+                            না, থাক
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl shadow-md hover:bg-red-700 transition-colors w-full">
+                            হ্যাঁ, ডিলিট করুন
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- lead add button form -->
+        <script>
+            const openModalBtn = document.getElementById('openModalBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const leadModal = document.getElementById('leadModal');
+
+            function openModal() {
+                leadModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // মোডাল খুললে পেজ স্ক্রল বন্ধ থাকবে
+            }
+
+            function closeModal() {
+                leadModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // মোডাল বন্ধ হলে পেজ স্ক্রল চালু হবে
+            }
+
+            openModalBtn.addEventListener('click', openModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelModalBtn.addEventListener('click', closeModal);
+
+            // মোডালের বাইরের ফাঁকা জায়গায় ক্লিক করলে বন্ধ হবে
+            leadModal.addEventListener('click', (e) => {
+                if (e.target === leadModal) {
+                    closeModal();
+                }
+            });
+        </script>
+
+        <!-- lead edit button form -->
+        <script>
+            function openEditModal(lead) {
+                const modal = document.getElementById('editLeadModal');
+                const form = document.getElementById('editLeadForm');
+
+                // এখানে আপনার ব্যাকএন্ড রাউট অনুযায়ী আপডেট URL সেট হবে
+                form.action = `/leads/update/${lead._id}`;
+
+                // ফর্ম ইনপুটে ডাটা অটো সেট করার লজিক
+                document.getElementById('edit_customerName').value = lead.customerName || '';
+                document.getElementById('edit_phone').value = lead.phone || '';
+                document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
+                document.getElementById('edit_propertyType').value = lead.propertyType || '';
+                document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
+                document.getElementById('edit_budgetMax').value = lead.budgetMax || '';
+                document.getElementById('edit_preferredSize').value = lead.preferredSize || '';
+                document.getElementById('edit_bedrooms').value = lead.bedrooms || '';
+                document.getElementById('edit_purpose').value = lead.purpose || '';
+                document.getElementById('edit_source').value = lead.source || '';
+                document.getElementById('edit_priority').value = lead.priority || '';
+                document.getElementById('edit_status').value = lead.status || 'new';
+                document.getElementById('edit_messageNote').value = lead.messageNote || '';
+
+                // ডেট ফরম্যাটিং (YYYY-MM-DD ফরম্যাটে ইনপুটে বসানোর জন্য)
+                if (lead.followUpDate) {
+                    const date = new Date(lead.followUpDate);
+                    const formattedDate = date.toISOString().split('T')[0];
+                    document.getElementById('edit_followUpDate').value = formattedDate;
+                } else {
+                    document.getElementById('edit_followUpDate').value = '';
+                }
+
+                // মোডাল ওপেন করার অ্যানিমেশন ইফেক্ট
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.children[0].classList.remove('scale-95');
+                }, 10);
+            }
+
+            function closeEditModal() {
+                const modal = document.getElementById('editLeadModal');
+                modal.children[0].classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 150);
+            }
+
+            // মোডালের বাইরে ব্যাকড্রপে ক্লিক করলে যেন মোডাল বন্ধ হয়ে যায়
+            window.onclick = function (event) {
+                const modal = document.getElementById('editLeadModal');
+                if (event.target == modal) {
+                    closeEditModal();
+                }
+            }
+        </script>
+
+        <!-- lead delete button form -->
+        <script>
+            function openDeleteModal(leadId) {
+                const modal = document.getElementById('deleteLeadModal');
+                const form = document.getElementById('deleteLeadForm');
+
+                // ব্যাকএন্ডের ডিলিট রাউট অনুযায়ী অ্যাকশন URL সেট হবে
+                // সাধারণত এক্সপ্রেস-এ ডিলিট করার জন্য আমরা POST বা DELETE মেথড ব্যবহার করি
+                form.action = `/leads/delete/${leadId}`;
+
+                // মোডাল ওপেন অ্যানিমেশন
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.children[0].classList.remove('scale-95');
+                }, 10);
+            }
+
+            function closeDeleteModal() {
+                const modal = document.getElementById('deleteLeadModal');
+                modal.children[0].classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 150);
+            }
+
+            // আগের window.onclick ফাংশনটি আপডেট করে নিন যাতে দুই মোডালের বাইরেই কাজ করে:
+            window.onclick = function (event) {
+                const editModal = document.getElementById('editLeadModal');
+                const deleteModal = document.getElementById('deleteLeadModal');
+
+                if (event.target == editModal) {
+                    closeEditModal();
+                }
+                if (event.target == deleteModal) {
+                    closeDeleteModal();
+                }
+            }
+
+        </script>
+
+
+
+        <% - include('partials/footer') %>

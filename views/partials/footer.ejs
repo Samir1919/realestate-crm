@@ -1,0 +1,102 @@
+</div> <!-- Closing Main Content Area Wrapper from sidebar.ejs -->
+</div> <!-- Closing Main layout row container from header.ejs -->
+
+<script>
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const openBtn = document.getElementById('open-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const footerText = document.getElementById('sidebar-footer');
+    const labels = document.querySelectorAll('.sidebar-label');
+
+    // সাইডবার টগল করার ফাংশন
+    function toggleSidebar() {
+        if (window.innerWidth >= 768) {
+            // ডেক্সটপ মোড: w-64 থেকে w-16 (Mini Sidebar) এ কনভার্ট হবে
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+
+                // টেক্সটগুলো হাইড করা যাতে ভেঙে নিচে না যায়
+                logoText.classList.add('hidden');
+                footerText.classList.add('hidden');
+                labels.forEach(lbl => lbl.classList.add('hidden'));
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+
+                // টেক্সটগুলো আবার শো করা
+                logoText.classList.remove('hidden');
+                footerText.classList.remove('hidden');
+                labels.forEach(lbl => lbl.classList.remove('hidden'));
+            }
+        } else {
+            // মোবাইল মোড: এখানে পুরোপুরি শো/হাইড হবে
+            if (sidebar.classList.contains('w-64')) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-0');
+                openBtn.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('w-0');
+                sidebar.classList.add('w-64');
+                openBtn.classList.add('hidden');
+            }
+        }
+    }
+
+    toggleBtn.addEventListener('click', toggleSidebar);
+    openBtn.addEventListener('click', toggleSidebar);
+
+    // স্ক্রিন সাইজ পরিবর্তন হলে রিমেইনিং ক্লাস সেটআপ
+    function checkScreenSize() {
+        // টেক্সটগুলোর ডিফল্ট স্টেট ক্লিয়ার করা
+        logoText.classList.remove('hidden');
+        footerText.classList.remove('hidden');
+        labels.forEach(lbl => lbl.classList.remove('hidden'));
+
+        if (window.innerWidth >= 768) {
+            sidebar.classList.remove('w-0', 'fixed');
+            sidebar.classList.add('w-64', 'relative');
+            openBtn.classList.add('hidden');
+        } else {
+            sidebar.classList.remove('w-64', 'w-16', 'relative');
+            sidebar.classList.add('w-0', 'fixed');
+            openBtn.classList.remove('hidden');
+        }
+    }
+
+    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('DOMContentLoaded', checkScreenSize);
+</script>
+
+<!-- lead add button form -->
+<script>
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const leadModal = document.getElementById('leadModal');
+
+    function openModal() {
+        leadModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // মোডাল খুললে পেজ স্ক্রল বন্ধ থাকবে
+    }
+
+    function closeModal() {
+        leadModal.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // মোডাল বন্ধ হলে পেজ স্ক্রল চালু হবে
+    }
+
+    openModalBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+
+    // মোডালের বাইরের ফাঁকা জায়গায় ক্লিক করলে বন্ধ হবে
+    leadModal.addEventListener('click', (e) => {
+        if (e.target === leadModal) {
+            closeModal();
+        }
+    });
+</script>
+</body>
+
+</html>
