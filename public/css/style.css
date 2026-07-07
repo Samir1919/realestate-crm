@@ -1,0 +1,50 @@
+.lead-modal {
+    align-items: flex-end;
+}
+
+.lead-modal-panel {
+    border-radius: 1rem 1rem 0 0;
+    min-height: 92dvh;
+}
+
+.lead-modal-input {
+    min-height: 48px;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.lead-modal-action-bar {
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.lead-form-section {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.toast-action-btn {
+    border: 1px solid rgba(30, 64, 175, 0.3);
+    background: #ffffff;
+    color: #1d4ed8;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.6rem;
+}
+
+.toast-action-btn:hover {
+    background: #eff6ff;
+}
+
+@media (min-width: 640px) {
+    .lead-modal {
+        align-items: center;
+    }
+
+    .lead-modal-panel {
+        border-radius: 0.75rem;
+        min-height: auto;
+    }
+
+    .lead-modal-action-bar {
+        box-shadow: none;
+    }
+}

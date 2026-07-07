@@ -3,20 +3,100 @@
     const closeModalBtn = document.getElementById('closeModalBtn');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const leadModal = document.getElementById('leadModal');
+    const leadModalPanel = document.getElementById('leadModalPanel');
+    const leadDraftNotice = document.getElementById('leadDraftNotice');
+    const clearDraftBtn = document.getElementById('clearDraftBtn');
 
-    function openModal() {
-        leadModal.classList.remove('hidden');
+    const importLeadsBtn = document.getElementById('importLeadsBtn');
+    const importCsvInput = document.getElementById('importCsvInput');
+    const addLeadForm = document.getElementById('addLeadForm');
+    const editLeadForm = document.getElementById('editLeadForm');
+    const addPhoneInput = document.getElementById('lead_phone');
+    const editPhoneInput = document.getElementById('edit_phone');
+    const addPhoneInlineError = document.getElementById('addPhoneInlineError');
+    const phoneValidationMessage = 'সঠিক ফোন নম্বর দিন। দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile।';
+    const leadDraftStorageKey = 'lead-form-draft-v1';
+
+    let bodyScrollLocks = 0;
+    let leadModalCloseTimer = null;
+
+    function lockBodyScroll() {
+        bodyScrollLocks += 1;
+        if (bodyScrollLocks > 1) {
+            return;
+        }
+
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        document.body.dataset.prevOverflow = document.body.style.overflow || '';
+        document.body.dataset.prevPaddingRight = document.body.style.paddingRight || '';
         document.body.style.overflow = 'hidden';
+
+        if (scrollbarWidth > 0) {
+            document.body.style.paddingRight = `${scrollbarWidth}px`;
+        }
+    }
+
+    function unlockBodyScroll() {
+        bodyScrollLocks = Math.max(0, bodyScrollLocks - 1);
+        if (bodyScrollLocks !== 0) {
+            return;
+        }
+
+        document.body.style.overflow = document.body.dataset.prevOverflow || '';
+        document.body.style.paddingRight = document.body.dataset.prevPaddingRight || '';
+        delete document.body.dataset.prevOverflow;
+        delete document.body.dataset.prevPaddingRight;
     }
 
     function closeModal() {
-        leadModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+        if (!leadModal) {
+            return;
+        }
+
+        if (leadModalPanel) {
+            leadModalPanel.classList.add('scale-95');
+        }
+
+        if (leadModalCloseTimer) {
+            clearTimeout(leadModalCloseTimer);
+        }
+
+        leadModalCloseTimer = setTimeout(() => {
+            leadModal.classList.add('hidden');
+            leadModal.classList.remove('flex');
+            leadModalCloseTimer = null;
+        }, 140);
+
+        clearAddPhoneInlineError();
+        unlockBodyScroll();
+    }
+
+    function openModal() {
+        if (!leadModal) {
+            return;
+        }
+
+        if (leadModalCloseTimer) {
+            clearTimeout(leadModalCloseTimer);
+            leadModalCloseTimer = null;
+        }
+
+        leadModal.classList.remove('hidden');
+        leadModal.classList.add('flex');
+
+        if (leadModalPanel) {
+            leadModalPanel.classList.remove('scale-95');
+        }
+
+        lockBodyScroll();
+        restoreLeadFormDraft();
+        validateAddPhoneInline(true);
     }
 
     if (openModalBtn) openModalBtn.addEventListener('click', openModal);
     if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
     if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+    if (clearDraftBtn) clearDraftBtn.addEventListener('click', clearLeadFormDraft);
 
     if (leadModal) {
         leadModal.addEventListener('click', (e) => {
@@ -26,8 +106,370 @@
         });
     }
 
-    const importLeadsBtn = document.getElementById('importLeadsBtn');
-    const importCsvInput = document.getElementById('importCsvInput');
+    function showDraftNotice(show) {
+        if (!leadDraftNotice) {
+            return;
+        }
+
+        leadDraftNotice.classList.toggle('hidden', !show);
+    }
+
+    function saveLeadFormDraft() {
+        if (!addLeadForm) {
+            return;
+        }
+
+        const payload = {};
+        const formData = new FormData(addLeadForm);
+        for (const [name, value] of formData.entries()) {
+            payload[name] = String(value || '');
+        }
+
+        localStorage.setItem(leadDraftStorageKey, JSON.stringify(payload));
+    }
+
+    function clearLeadFormDraft() {
+        localStorage.removeItem(leadDraftStorageKey);
+        showDraftNotice(false);
+    }
+
+    function restoreLeadFormDraft() {
+        if (!addLeadForm) {
+            return;
+        }
+
+        const rawDraft = localStorage.getItem(leadDraftStorageKey);
+        if (!rawDraft) {
+            showDraftNotice(false);
+            return;
+        }
+
+        try {
+            const draft = JSON.parse(rawDraft);
+            let restoredAnyValue = false;
+
+            Object.entries(draft).forEach(([name, value]) => {
+                const field = addLeadForm.elements.namedItem(name);
+                if (!field || typeof field.value === 'undefined') {
+                    return;
+                }
+
+                if (String(value || '').trim()) {
+                    restoredAnyValue = true;
+                }
+
+                field.value = value;
+            });
+
+            showDraftNotice(restoredAnyValue);
+        } catch (error) {
+            localStorage.removeItem(leadDraftStorageKey);
+            showDraftNotice(false);
+        }
+    }
+
+    function clearAddPhoneInlineError() {
+        if (addPhoneInlineError) {
+            addPhoneInlineError.textContent = '';
+        }
+
+        if (addPhoneInput) {
+            addPhoneInput.classList.remove('border-red-400', 'ring-red-200');
+        }
+    }
+
+    function setAddPhoneInlineError(message) {
+        if (!addPhoneInput) {
+            return;
+        }
+
+        if (addPhoneInlineError) {
+            addPhoneInlineError.textContent = message || '';
+        }
+
+        if (message) {
+            addPhoneInput.classList.add('border-red-400');
+            return;
+        }
+
+        addPhoneInput.classList.remove('border-red-400');
+    }
+
+    function sanitizePhoneInputValue(value) {
+        const rawValue = String(value || '').trim();
+        if (!rawValue) {
+            return '';
+        }
+
+        const compactValue = rawValue.replace(/[\s().-]/g, '');
+        const normalizedPlusPrefix = compactValue.startsWith('00') ? `+${compactValue.slice(2)}` : compactValue;
+
+        if (normalizedPlusPrefix.startsWith('+')) {
+            return `+${normalizedPlusPrefix.slice(1).replace(/\D/g, '')}`;
+        }
+
+        return normalizedPlusPrefix.replace(/\D/g, '');
+    }
+
+    function isValidPhoneInputValue(value) {
+        return /^(\+\d{8,15}|\d{8,15})$/.test(sanitizePhoneInputValue(value));
+    }
+
+    function bindPhoneSanitizer(input) {
+        if (!input) {
+            return;
+        }
+
+        const applySanitizedValue = () => {
+            input.value = sanitizePhoneInputValue(input.value);
+        };
+
+        input.addEventListener('input', applySanitizedValue);
+        input.addEventListener('blur', applySanitizedValue);
+        applySanitizedValue();
+    }
+
+    bindPhoneSanitizer(addPhoneInput);
+    bindPhoneSanitizer(editPhoneInput);
+
+    function validateAddPhoneInline(skipRequiredCheck = false) {
+        if (!addPhoneInput) {
+            return true;
+        }
+
+        const sanitizedValue = sanitizePhoneInputValue(addPhoneInput.value);
+        addPhoneInput.value = sanitizedValue;
+
+        if (!sanitizedValue && !skipRequiredCheck) {
+            setAddPhoneInlineError('ফোন নম্বর দেয়া বাধ্যতামূলক।');
+            return false;
+        }
+
+        if (sanitizedValue && !isValidPhoneInputValue(sanitizedValue)) {
+            setAddPhoneInlineError(phoneValidationMessage);
+            return false;
+        }
+
+        clearAddPhoneInlineError();
+        return true;
+    }
+
+    function setupFormKeyboardFlow(form) {
+        if (!form) {
+            return;
+        }
+
+        const fields = Array.from(form.querySelectorAll('input, select, textarea')).filter((element) => {
+            if (!element || element.disabled) {
+                return false;
+            }
+            return element.type !== 'hidden';
+        });
+
+        fields.forEach((field, index) => {
+            field.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' || field.tagName.toLowerCase() === 'textarea') {
+                    return;
+                }
+
+                event.preventDefault();
+                const nextField = fields[index + 1];
+                if (nextField) {
+                    nextField.focus();
+                } else {
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.focus();
+                    }
+                }
+            });
+        });
+    }
+
+    setupFormKeyboardFlow(addLeadForm);
+
+    function showPopupMessage(message, type = 'error', options = {}) {
+        const { duration = 3200, actions = [] } = options;
+        const existingPopup = document.getElementById('leadFormPopupMessage');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        const popup = document.createElement('div');
+        popup.id = 'leadFormPopupMessage';
+        popup.className = [
+            'fixed top-5 right-5 z-[80] rounded-lg shadow-lg px-4 py-3 text-sm font-medium max-w-sm space-y-2',
+            type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+        ].join(' ');
+
+        const messageNode = document.createElement('p');
+        messageNode.textContent = message || 'Something went wrong. Please try again.';
+        popup.appendChild(messageNode);
+
+        if (actions.length) {
+            const actionWrap = document.createElement('div');
+            actionWrap.className = 'flex items-center gap-2';
+
+            actions.forEach((action) => {
+                const actionButton = document.createElement('button');
+                actionButton.type = 'button';
+                actionButton.textContent = action.label;
+                actionButton.className = action.className || 'toast-action-btn';
+                actionButton.addEventListener('click', () => {
+                    popup.remove();
+                    if (typeof action.onClick === 'function') {
+                        action.onClick();
+                    }
+                });
+                actionWrap.appendChild(actionButton);
+            });
+
+            popup.appendChild(actionWrap);
+        }
+
+        document.body.appendChild(popup);
+        setTimeout(() => {
+            popup.remove();
+        }, duration);
+    }
+
+    async function submitLeadFormAjax(form, options = {}) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        const previousLabel = submitButton ? submitButton.textContent : '';
+        const shouldShowSuccessMessage = options.showSuccessMessage !== false;
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+        }
+
+        try {
+            const formPayload = new URLSearchParams(new FormData(form));
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formPayload
+            });
+
+            const payload = await response.json().catch(() => null);
+            const message = payload && payload.message
+                ? payload.message
+                : (response.ok ? 'Saved successfully.' : 'Request failed.');
+
+            if (!response.ok) {
+                showPopupMessage(message, 'error');
+                return false;
+            }
+
+            if (options.resetForm) {
+                form.reset();
+            }
+
+            if (typeof options.onSuccess === 'function') {
+                options.onSuccess(message);
+            }
+
+            if (shouldShowSuccessMessage) {
+                showPopupMessage(message, 'success');
+            }
+            return true;
+        } catch (error) {
+            showPopupMessage('Server connection failed. Please try again.', 'error');
+            return false;
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = previousLabel;
+            }
+        }
+    }
+
+    if (addLeadForm) {
+        addLeadForm.addEventListener('input', saveLeadFormDraft);
+        addLeadForm.addEventListener('change', saveLeadFormDraft);
+
+        if (addPhoneInput) {
+            addPhoneInput.addEventListener('input', () => validateAddPhoneInline(true));
+            addPhoneInput.addEventListener('blur', () => validateAddPhoneInline(false));
+        }
+
+        addLeadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!validateAddPhoneInline(false)) {
+                addPhoneInput.focus();
+                return;
+            }
+
+            const ok = await submitLeadFormAjax(addLeadForm, {
+                resetForm: true,
+                showSuccessMessage: false,
+                onSuccess: (successMessage) => {
+                    clearLeadFormDraft();
+                    closeModal();
+
+                    let shouldReload = true;
+                    const reloadTimer = setTimeout(() => {
+                        if (shouldReload) {
+                            window.location.reload();
+                        }
+                    }, 2000);
+
+                    showPopupMessage(successMessage, 'success', {
+                        duration: 5000,
+                        actions: [
+                            {
+                                label: 'Add another',
+                                onClick: () => {
+                                    shouldReload = false;
+                                    clearTimeout(reloadTimer);
+                                    openModal();
+                                }
+                            },
+                            {
+                                label: 'Refresh list',
+                                onClick: () => {
+                                    shouldReload = false;
+                                    clearTimeout(reloadTimer);
+                                    window.location.reload();
+                                }
+                            }
+                        ]
+                    });
+                }
+            });
+
+            if (!ok) {
+                openModal();
+            }
+        });
+    }
+
+    if (editLeadForm) {
+        editLeadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (editPhoneInput) {
+                editPhoneInput.value = sanitizePhoneInputValue(editPhoneInput.value);
+                if (!isValidPhoneInputValue(editPhoneInput.value)) {
+                    showPopupMessage(phoneValidationMessage, 'error');
+                    editPhoneInput.focus();
+                    return;
+                }
+            }
+
+            await submitLeadFormAjax(editLeadForm, {
+                onSuccess: () => {
+                    closeEditModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 450);
+                }
+            });
+        });
+    }
 
     if (importLeadsBtn && importCsvInput) {
         importLeadsBtn.addEventListener('click', () => {
@@ -136,7 +578,7 @@
         form.action = `/leads/update/${lead._id}`;
 
         document.getElementById('edit_customerName').value = lead.customerName || '';
-        document.getElementById('edit_phone').value = lead.phone || '';
+        document.getElementById('edit_phone').value = sanitizePhoneInputValue(lead.phone || '');
         document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
         document.getElementById('edit_propertyType').value = lead.propertyType || '';
         document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
@@ -161,7 +603,7 @@
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         modalPanel.classList.remove('scale-95');
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
     }
 
     function closeEditModal() {
@@ -172,7 +614,7 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            unlockBodyScroll();
         }, 150);
     }
 
@@ -188,7 +630,7 @@
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         modalPanel.classList.remove('scale-95');
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
     }
 
     function closeDeleteModal() {
@@ -199,7 +641,7 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            unlockBodyScroll();
         }, 150);
     }
 
@@ -241,7 +683,7 @@
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         modalPanel.classList.remove('scale-95');
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
     }
 
     function closeViewModal() {
@@ -252,9 +694,19 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            unlockBodyScroll();
         }, 150);
     }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        if (leadModal && !leadModal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
 
     window.onclick = function (event) {
         const editModal = document.getElementById('editLeadModal');

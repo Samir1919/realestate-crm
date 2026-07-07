@@ -2,6 +2,7 @@ const Lead = require('../models/Lead');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 const { canAccess } = require('../utils/permissions');
+const { PHONE_VALIDATION_MESSAGE, normalizePhoneNumber, isValidPhoneNumber } = require('../utils/phone');
 
 const LEAD_CSV_COLUMNS = [
     'customerName',
@@ -84,6 +85,27 @@ function getCurrentRole(req) {
     return 'viewer';
 }
 
+function getCurrentUserId(req) {
+    if (!req.session || !req.session.user || !req.session.user.id) {
+        return null;
+    }
+
+    return String(req.session.user.id);
+}
+
+function buildLeadScopeQuery(req) {
+    const role = getCurrentRole(req).toLowerCase();
+    const userId = getCurrentUserId(req);
+
+    if (role === 'sales' && userId && mongoose.Types.ObjectId.isValid(userId)) {
+        return {
+            assignedUser: new mongoose.Types.ObjectId(userId)
+        };
+    }
+
+    return {};
+}
+
 function ensurePermission(req, res, permission) {
     const role = getCurrentRole(req);
     if (!canAccess(role, permission)) {
@@ -93,9 +115,77 @@ function ensurePermission(req, res, permission) {
     return true;
 }
 
+function isAjaxRequest(req) {
+    const accepts = String(req.headers.accept || '');
+    return req.xhr || accepts.includes('application/json') || req.headers['x-requested-with'] === 'XMLHttpRequest';
+}
+
+function duplicateLeadMessage(err, fallbackMessage) {
+    const duplicateField = Object.keys(err.keyPattern || {})[0] || Object.keys(err.keyValue || {})[0];
+
+    if (duplicateField === 'phone') {
+        return 'এই ফোন নম্বরটি দিয়ে ইতিমধ্যেই একটি লিড রয়েছে।';
+    }
+
+    if (duplicateField === 'referenceNumber') {
+        return 'এই রেফারেন্স নম্বরটি আগে থেকেই আছে। আবার চেষ্টা করুন।';
+    }
+
+    if (duplicateField === 'leadNumber') {
+        return 'এই লিড নম্বরটি আগে থেকেই আছে। আবার চেষ্টা করুন।';
+    }
+
+    return fallbackMessage;
+}
+
+function sendLeadFormSuccess(req, res, message) {
+    if (isAjaxRequest(req)) {
+        return res.status(200).json({
+            success: true,
+            message
+        });
+    }
+
+    return res.redirect('/leads');
+}
+
+function sendLeadFormError(req, res, statusCode, message) {
+    if (isAjaxRequest(req)) {
+        return res.status(statusCode).json({
+            success: false,
+            message
+        });
+    }
+
+    return res.status(statusCode).send(message);
+}
+
+function normalizeOptionalText(value) {
+    if (value === null || value === undefined) {
+        return undefined;
+    }
+
+    const normalized = String(value).trim();
+    if (!normalized) {
+        return undefined;
+    }
+
+    if (normalized.toLowerCase() === 'undefined' || normalized.toLowerCase() === 'null') {
+        return undefined;
+    }
+
+    return normalized;
+}
+
 exports.getLeadsApi = async (req, res) => {
     try {
-        const leads = await Lead.find()
+        if (!ensurePermission(req, res, 'viewLeads')) {
+            return;
+        }
+
+        const scopeQuery = buildLeadScopeQuery(req);
+
+        const leads = await Lead.find(scopeQuery)
             .populate('assignedUser', 'name email')
             .sort({ createdAt: -1 });
 
@@ -137,7 +227,8 @@ exports.getLeads = async (req, res) => {
             propertyType: (req.query.propertyType || '').trim()
         };
 
-        const query = {};
+        const scopeQuery = buildLeadScopeQuery(req);
+        const query = { ...scopeQuery };
 
         if (filters.q) {
             const regex = new RegExp(filters.q, 'i');
@@ -160,7 +251,7 @@ exports.getLeads = async (req, res) => {
         const skip = (page - 1) * limit;
 
         // ৪. ডাটাবেজে মোট কতগুলো লিড আছে তা কাউন্ট করুন
-        const totalLeads = await Lead.countDocuments();
+        const totalLeads = await Lead.countDocuments(scopeQuery);
         const filteredTotal = await Lead.countDocuments(query);
 
         const users = await User.find()
@@ -241,7 +332,8 @@ exports.exportLeadsCsv = async (req, res) => {
             return;
         }
 
-        const leads = await Lead.find().sort({ createdAt: -1 }).lean();
+        const scopeQuery = buildLeadScopeQuery(req);
+        const leads = await Lead.find(scopeQuery).sort({ createdAt: -1 }).lean();
 
         const header = LEAD_CSV_COLUMNS.join(',');
         const rows = leads.map((lead) => LEAD_CSV_COLUMNS.map((column) => {
@@ -306,8 +398,8 @@ exports.importLeadsCsv = async (req, res) => {
                 });
             }
 
-            const phone = String(rowData.phone || '').trim();
-            if (!phone) {
+            const phone = normalizePhoneNumber(rowData.phone);
+            if (!phone || !isValidPhoneNumber(phone)) {
                 skippedCount += 1;
                 continue;
             }
@@ -318,7 +410,7 @@ exports.importLeadsCsv = async (req, res) => {
 
             try {
                 const lead = new Lead({
-                    customerName: rowData.customerName || undefined,
+                    customerName: normalizeOptionalText(rowData.customerName),
                     phone,
                     preferredLocation: rowData.preferredLocation || undefined,
                     propertyType: normalizedPropertyType || undefined,
@@ -371,14 +463,20 @@ exports.addLead = async (req, res) => {
             messageNote
         } = req.body;
 
+        const normalizedCustomerName = normalizeOptionalText(customerName);
+        const normalizedPhone = normalizePhoneNumber(phone);
         const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
         const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
         const normalizedSource = source ? String(source).trim() : undefined;
 
+        if (!isValidPhoneNumber(normalizedPhone)) {
+            return sendLeadFormError(req, res, 400, PHONE_VALIDATION_MESSAGE);
+        }
+
         // একদম সেম নামে মডেলে পাস করা হলো
         const newLead = new Lead({
-            customerName,
-            phone,
+            customerName: normalizedCustomerName,
+            phone: normalizedPhone,
             preferredLocation,
             propertyType: normalizedPropertyType || undefined,
             budgetMin: budgetMin ? Number(budgetMin) : 0,
@@ -395,14 +493,14 @@ exports.addLead = async (req, res) => {
         });
 
         await newLead.save();
-        res.redirect('/leads');
+        return sendLeadFormSuccess(req, res, 'নতুন লিড সফলভাবে তৈরি হয়েছে।');
 
     } catch (err) {
         // ডুপ্লিকেট ফোন নম্বরের এরর হ্যান্ডেলিং
         if (err.code === 11000) {
-            return res.status(400).send('এই ফোন নম্বরটি দিয়ে ইতিপূরণেই একটি লিড তৈরি করা হয়েছে!');
+            return sendLeadFormError(req, res, 400, duplicateLeadMessage(err, 'এই তথ্যটি আগে থেকেই ব্যবহৃত হয়েছে।'));
         }
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -430,13 +528,19 @@ exports.updateLead = async (req, res) => {
             messageNote
         } = req.body;
 
+        const normalizedCustomerName = normalizeOptionalText(customerName);
+        const normalizedPhone = normalizePhoneNumber(phone);
         const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
         const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
         const normalizedSource = source ? String(source).trim() : undefined;
 
+        if (!isValidPhoneNumber(normalizedPhone)) {
+            return sendLeadFormError(req, res, 400, PHONE_VALIDATION_MESSAGE);
+        }
+
         await Lead.findByIdAndUpdate(req.params.id, {
-            customerName,
-            phone,
+            customerName: normalizedCustomerName,
+            phone: normalizedPhone,
             preferredLocation,
             propertyType: normalizedPropertyType || undefined,
             budgetMin: budgetMin ? Number(budgetMin) : 0,
@@ -452,13 +556,13 @@ exports.updateLead = async (req, res) => {
             messageNote
         });
 
-        res.redirect('/leads'); // আপডেট শেষে মেইন পেজেই রিডাইরেক্ট হবে
+        return sendLeadFormSuccess(req, res, 'লিড সফলভাবে আপডেট হয়েছে।');
 
     } catch (err) {
         if (err.code === 11000) {
-            return res.status(400).send('এই ফোন নম্বরটি অন্য একটি লিডে ইতিমধ্যেই ব্যবহার করা হয়েছে!');
+            return sendLeadFormError(req, res, 400, duplicateLeadMessage(err, 'এই তথ্যটি অন্য একটি লিডে আগে থেকেই ব্যবহার করা হয়েছে।'));
         }
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -486,4 +590,8 @@ exports.addTimelineActivity = async (req, res) => {
     } catch (err) {
         res.status(500).send(err.message);
     }
+};
+
+exports.__testables = {
+    buildLeadScopeQuery
 };

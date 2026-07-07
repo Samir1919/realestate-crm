@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { formatLeadReference } = require('../utils/leadReference');
 const LeadCounter = require('./LeadCounter');
+const { PHONE_VALIDATION_MESSAGE, normalizePhoneNumber, isValidPhoneNumber } = require('../utils/phone');
 
 const LeadSchema = new mongoose.Schema({
   referenceNumber: {
@@ -24,6 +25,11 @@ const LeadSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     trim: true,
+    set: normalizePhoneNumber,
+    validate: {
+      validator: isValidPhoneNumber,
+      message: PHONE_VALIDATION_MESSAGE
+    },
     index: true,
     unique: true
   },
