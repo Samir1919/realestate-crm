@@ -3,6 +3,80 @@ const User = require('../models/User');
 const mongoose = require('mongoose');
 const { canAccess } = require('../utils/permissions');
 
+const LEAD_CSV_COLUMNS = [
+    'customerName',
+    'phone',
+    'preferredLocation',
+    'propertyType',
+    'budgetMin',
+    'budgetMax',
+    'preferredSize',
+    'bedrooms',
+    'purpose',
+    'source',
+    'priority',
+    'status',
+    'followUpDate',
+    'messageNote'
+];
+
+function escapeCsvValue(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    const text = String(value);
+    if (/[",\n\r]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    return text;
+}
+
+function parseCsvLine(line) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        const next = line[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (char === ',' && !inQuotes) {
+            values.push(current);
+            current = '';
+            continue;
+        }
+
+        current += char;
+    }
+
+    values.push(current);
+    return values;
+}
+
+function normalizeCsvRows(csvText) {
+    const normalizedText = String(csvText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    if (!normalizedText) {
+        return [];
+    }
+
+    return normalizedText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+}
+
 function getCurrentRole(req) {
     if (req.session && req.session.user && req.session.user.role) {
         return req.session.user.role;
@@ -148,9 +222,126 @@ exports.getLeads = async (req, res) => {
             canCreateLead: canAccess(getCurrentRole(req), 'createLead'),
             canUpdateLead: canAccess(getCurrentRole(req), 'updateLead'),
             canDeleteLead: canAccess(getCurrentRole(req), 'deleteLead'),
-            userRole: getCurrentRole(req)
+            userRole: getCurrentRole(req),
+            importSummary: {
+                imported: Number.parseInt(req.query.imported || '0', 10) || 0,
+                skipped: Number.parseInt(req.query.skipped || '0', 10) || 0,
+                hasResult: Object.prototype.hasOwnProperty.call(req.query, 'imported')
+            }
         });
 
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
+
+exports.exportLeadsCsv = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'viewLeads')) {
+            return;
+        }
+
+        const leads = await Lead.find().sort({ createdAt: -1 }).lean();
+
+        const header = LEAD_CSV_COLUMNS.join(',');
+        const rows = leads.map((lead) => LEAD_CSV_COLUMNS.map((column) => {
+            if (column === 'followUpDate') {
+                if (!lead.followUpDate) {
+                    return '';
+                }
+
+                try {
+                    return escapeCsvValue(new Date(lead.followUpDate).toISOString().split('T')[0]);
+                } catch (error) {
+                    return '';
+                }
+            }
+
+            return escapeCsvValue(lead[column]);
+        }).join(','));
+
+        const csv = [header, ...rows].join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="leads-export-${Date.now()}.csv"`);
+        res.status(200).send(csv);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
+
+exports.importLeadsCsv = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'createLead')) {
+            return;
+        }
+
+        const csvText = String(req.body.csvText || '');
+        const rows = normalizeCsvRows(csvText);
+
+        if (!rows.length) {
+            return res.status(400).send('CSV data is empty');
+        }
+
+        const headerValues = parseCsvLine(rows[0]).map((value) => String(value || '').trim());
+        const hasHeader = headerValues.includes('phone');
+        const dataRows = hasHeader ? rows.slice(1) : rows;
+
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        for (const row of dataRows) {
+            const values = parseCsvLine(row);
+            const rowData = {};
+
+            if (hasHeader) {
+                headerValues.forEach((header, index) => {
+                    if (header) {
+                        rowData[header] = String(values[index] || '').trim();
+                    }
+                });
+            } else {
+                LEAD_CSV_COLUMNS.forEach((header, index) => {
+                    rowData[header] = String(values[index] || '').trim();
+                });
+            }
+
+            const phone = String(rowData.phone || '').trim();
+            if (!phone) {
+                skippedCount += 1;
+                continue;
+            }
+
+            const normalizedPurpose = rowData.purpose ? String(rowData.purpose).trim() : undefined;
+            const normalizedPropertyType = rowData.propertyType ? String(rowData.propertyType).trim() : undefined;
+            const normalizedSource = rowData.source ? String(rowData.source).trim() : undefined;
+
+            try {
+                const lead = new Lead({
+                    customerName: rowData.customerName || undefined,
+                    phone,
+                    preferredLocation: rowData.preferredLocation || undefined,
+                    propertyType: normalizedPropertyType || undefined,
+                    budgetMin: rowData.budgetMin ? Number(rowData.budgetMin) : 0,
+                    budgetMax: rowData.budgetMax ? Number(rowData.budgetMax) : 0,
+                    preferredSize: rowData.preferredSize || undefined,
+                    bedrooms: rowData.bedrooms ? Number(rowData.bedrooms) : 0,
+                    purpose: normalizedPurpose || undefined,
+                    source: normalizedSource || undefined,
+                    priority: rowData.priority || undefined,
+                    status: rowData.status || undefined,
+                    followUpDate: rowData.followUpDate || undefined,
+                    messageNote: rowData.messageNote || undefined
+                });
+
+                await lead.save();
+                importedCount += 1;
+            } catch (error) {
+                skippedCount += 1;
+            }
+        }
+
+        res.redirect(`/leads?imported=${importedCount}&skipped=${skippedCount}`);
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -180,18 +371,22 @@ exports.addLead = async (req, res) => {
             messageNote
         } = req.body;
 
+        const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
+        const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
+        const normalizedSource = source ? String(source).trim() : undefined;
+
         // একদম সেম নামে মডেলে পাস করা হলো
         const newLead = new Lead({
             customerName,
             phone,
             preferredLocation,
-            propertyType,
+            propertyType: normalizedPropertyType || undefined,
             budgetMin: budgetMin ? Number(budgetMin) : 0,
             budgetMax: budgetMax ? Number(budgetMax) : 0,
             preferredSize,
             bedrooms: bedrooms ? Number(bedrooms) : 0,
-            purpose,
-            source,
+            purpose: normalizedPurpose || undefined,
+            source: normalizedSource || undefined,
             assignedUser: assignedUser || null,
             priority,
             status,
@@ -235,17 +430,21 @@ exports.updateLead = async (req, res) => {
             messageNote
         } = req.body;
 
+        const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
+        const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
+        const normalizedSource = source ? String(source).trim() : undefined;
+
         await Lead.findByIdAndUpdate(req.params.id, {
             customerName,
             phone,
             preferredLocation,
-            propertyType,
+            propertyType: normalizedPropertyType || undefined,
             budgetMin: budgetMin ? Number(budgetMin) : 0,
             budgetMax: budgetMax ? Number(budgetMax) : 0,
             preferredSize,
             bedrooms: bedrooms ? Number(bedrooms) : 0,
-            purpose,
-            source,
+            purpose: normalizedPurpose || undefined,
+            source: normalizedSource || undefined,
             assignedUser: assignedUser || null,
             priority,
             status,

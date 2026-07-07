@@ -1,52 +1,66 @@
 <header class="min-w-0 w-full">
-    <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between min-w-0">
-        <div class="min-w-0 flex-1">
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 safe-truncate">Leads CRM</h1>
-            <p class="text-slate-500 mt-1 text-sm sm:text-base safe-truncate">
-                <%= totalLeads %> total · <%= filteredTotal %> shown
-            </p>
+    <% if (importSummary && importSummary.hasResult) { %>
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            CSV import complete: <strong>
+                <%= importSummary.imported %>
+            </strong> imported, <strong>
+                <%= importSummary.skipped %>
+            </strong> skipped.
         </div>
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full xl:w-auto xl:justify-end min-w-0">
-            <a class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-semibold hover:bg-amber-100 transition-colors"
-                href="/admin/follow-ups" data-discover="true"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell h-4 w-4 shrink-0"
-                    aria-hidden="true">
-                    <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
-                    <path
-                        d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326">
-                    </path>
-                </svg><span class="whitespace-nowrap">
-                    <%= stats.todayFollowUpsCount %> follow-ups
-                </span></a>
-            <% if (canCreateLead || (permissions && permissions.createLead)) { %>
-                <button id="openModalBtn"
-                    class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-gradient-to-r from-[#FF6B2C] to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:scale-[1.02] h-9 px-3 text-xs rounded-xl brand-gradient border-0 text-white whitespace-nowrap"><svg
-                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="lucide lucide-plus h-4 w-4" aria-hidden="true">
-                        <path d="M5 12h14"></path>
-                        <path d="M12 5v14"></path>
-                    </svg> Add Lead
-                </button>
-                <% } %>
-                    <button
-                        class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
-                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-upload h-4 w-4" aria-hidden="true">
-                            <path d="M12 3v12"></path>
-                            <path d="m17 8-5-5-5 5"></path>
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        </svg> Import Leads</button><button
-                        class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
-                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-download h-4 w-4" aria-hidden="true">
-                            <path d="M12 15V3"></path>
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <path d="m7 10 5 5 5-5"></path>
-                        </svg> Export CSV</button>
-        </div>
-    </div>
+        <% } %>
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between min-w-0">
+                <div class="min-w-0 flex-1">
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 safe-truncate">Leads CRM</h1>
+                    <p class="text-slate-500 mt-1 text-sm sm:text-base safe-truncate">
+                        <%= totalLeads %> total · <%= filteredTotal %> shown
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full xl:w-auto xl:justify-end min-w-0">
+                    <a class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-semibold hover:bg-amber-100 transition-colors"
+                        href="/admin/follow-ups" data-discover="true"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell h-4 w-4 shrink-0"
+                            aria-hidden="true">
+                            <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+                            <path
+                                d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326">
+                            </path>
+                        </svg><span class="whitespace-nowrap">
+                            <%= stats.todayFollowUpsCount %> follow-ups
+                        </span></a>
+                    <% if (canCreateLead || (permissions && permissions.createLead)) { %>
+                        <button id="openModalBtn"
+                            class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-gradient-to-r from-[#FF6B2C] to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:scale-[1.02] h-9 px-3 text-xs rounded-xl brand-gradient border-0 text-white whitespace-nowrap"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-plus h-4 w-4" aria-hidden="true">
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5v14"></path>
+                            </svg> Add Lead
+                        </button>
+                        <% } %>
+                            <% if (canCreateLead || (permissions && permissions.createLead)) { %>
+                                <input id="importCsvInput" type="file" accept=".csv,text/csv" class="hidden">
+                                <button id="importLeadsBtn" type="button"
+                                    class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-upload h-4 w-4" aria-hidden="true">
+                                        <path d="M12 3v12"></path>
+                                        <path d="m17 8-5-5-5 5"></path>
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    </svg> Import Leads</button>
+                                <% } %>
+                                    <a href="/leads/export.csv"
+                                        class="inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-9 px-3 text-xs rounded-xl whitespace-nowrap"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="lucide lucide-download h-4 w-4" aria-hidden="true">
+                                            <path d="M12 15V3"></path>
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <path d="m7 10 5 5 5-5"></path>
+                                        </svg> Export CSV</a>
+                </div>
+            </div>
 </header>

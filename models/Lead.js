@@ -18,7 +18,6 @@ const LeadSchema = new mongoose.Schema({
   // কাস্টমার সংক্রান্ত তথ্য
   customerName: {
     type: String,
-    required: [true, 'Customer name is required'],
     trim: true
   },
   phone: {
@@ -36,7 +35,6 @@ const LeadSchema = new mongoose.Schema({
   },
   propertyType: {
     type: String,
-    required: [true, 'Property type is required'],
     enum: ['Land Share', 'Ready Flat', 'Land / Plot', 'Commercial', 'Upcoming Project']
   },
   budgetMin: {
@@ -63,7 +61,7 @@ const LeadSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    required: [true, 'Source is required'],
+    default: 'whatsapp',
     enum: ['website', 'facebook', 'google', 'whatsapp', 'phone', 'referral', 'walk in']
   },
 

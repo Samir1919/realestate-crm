@@ -33,6 +33,8 @@ router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.get
 // Leads & Timeline
 router.get('/leads', leadController.getLeads);
 router.post('/leads', leadController.addLead);
+router.get('/leads/export.csv', leadController.exportLeadsCsv);
+router.post('/leads/import', leadController.importLeadsCsv);
 router.post('/leads/update/:id', leadController.updateLead);
 router.post('/leads/delete/:id', leadController.deleteLead);
 
