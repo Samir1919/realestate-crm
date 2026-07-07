@@ -1,0 +1,162 @@
+<%- include('../partials/header') %>
+    <%- include('../partials/sidebar') %>
+
+        <div class="w-full min-w-0 overflow-x-hidden">
+            <div class="safe-container mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px]">
+                <header class="min-w-0 w-full">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between min-w-0">
+                        <div class="min-w-0 flex-1">
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 safe-truncate">User Management</h1>
+                            <p class="text-slate-500 mt-1 text-sm sm:text-base safe-truncate">Assign role access for
+                                your team</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="openAddUserModal"
+                                class="inline-flex items-center rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">Add
+                                User</button>
+                        </div>
+                    </div>
+                </header>
+
+                <% if (created) { %>
+                    <div
+                        class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                        New user created successfully with default role: viewer.
+                    </div>
+                    <% } %>
+
+                        <% if (error) { %>
+                            <div
+                                class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                                <%= error %>
+                            </div>
+                            <% } %>
+
+                                <div
+                                    class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                    <div class="w-full min-w-0 overflow-x-auto">
+                                        <table class="w-full min-w-[720px] text-sm">
+                                            <thead>
+                                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
+                                                    <th class="text-left p-3 font-semibold">Name</th>
+                                                    <th class="text-left p-3 font-semibold">Email</th>
+                                                    <th class="text-left p-3 font-semibold">Current Role</th>
+                                                    <th class="text-left p-3 font-semibold">Assign Role</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% users.forEach((item)=> { %>
+                                                    <tr
+                                                        class="border-t border-slate-100 hover:bg-slate-50/80 transition-colors">
+                                                        <td class="p-3"><span class="font-medium text-slate-900">
+                                                                <%= item.name %>
+                                                            </span></td>
+                                                        <td class="p-3 text-slate-600">
+                                                            <%= item.email %>
+                                                        </td>
+                                                        <td class="p-3">
+                                                            <span
+                                                                class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium capitalize <%= item.role === 'admin' ? 'border-violet-200 bg-violet-50 text-violet-700' : item.role === 'sales' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-sky-200 bg-sky-50 text-sky-700' %>">
+                                                                <%= item.role %>
+                                                            </span>
+                                                        </td>
+                                                        <td class="p-3">
+                                                            <form method="POST"
+                                                                action="/admin/users/<%= item._id %>/role"
+                                                                class="flex items-center gap-2">
+                                                                <select name="role"
+                                                                    class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+                                                                    <% roles.forEach((role)=> { %>
+                                                                        <option value="<%= role.name %>"
+                                                                            <%=item.role===role.name ? 'selected' : ''
+                                                                            %>>
+                                                                            <%= role.name %>
+                                                                        </option>
+                                                                        <% }) %>
+                                                                </select>
+                                                                <button type="submit"
+                                                                    class="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Update</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                    <% }) %>
+                                                        <% if (users.length===0) { %>
+                                                            <tr>
+                                                                <td colspan="4" class="p-8 text-center text-slate-400">
+                                                                    No users found.
+                                                                </td>
+                                                            </tr>
+                                                            <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+            </div>
+        </div>
+
+        <div id="addUserModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+            <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <h2 class="text-lg font-semibold text-slate-900">Add New User</h2>
+                    <button type="button" id="closeAddUserModal"
+                        class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">&times;</button>
+                </div>
+                <form method="POST" action="/admin/users/create" class="space-y-4 p-5">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Name</label>
+                        <input name="name" type="text" required
+                            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                        <input name="email" type="email" required
+                            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                        <input name="password" type="password" required
+                            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                    <p class="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">New users are
+                        created as viewer by default. Role can be updated from this page.</p>
+                    <div class="flex items-center justify-end gap-2 pt-2">
+                        <button type="button" id="cancelAddUserModal"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                        <button type="submit"
+                            class="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Create
+                            User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            const addUserModal = document.getElementById('addUserModal');
+            const openAddUserModal = document.getElementById('openAddUserModal');
+            const closeAddUserModal = document.getElementById('closeAddUserModal');
+            const cancelAddUserModal = document.getElementById('cancelAddUserModal');
+
+            function showAddUserModal() {
+                addUserModal.classList.remove('hidden');
+                addUserModal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideAddUserModal() {
+                addUserModal.classList.add('hidden');
+                addUserModal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+
+            openAddUserModal.addEventListener('click', showAddUserModal);
+            closeAddUserModal.addEventListener('click', hideAddUserModal);
+            cancelAddUserModal.addEventListener('click', hideAddUserModal);
+
+            addUserModal.addEventListener('click', (event) => {
+                if (event.target === addUserModal) {
+                    hideAddUserModal();
+                }
+            });
+        </script>
+
+        <%- include('../partials/footer') %>

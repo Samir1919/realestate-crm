@@ -1,0 +1,81 @@
+<form method="GET" action="/leads"
+    class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 !p-4">
+    <div class="flex flex-col gap-3 min-w-0">
+        <div class="relative min-w-0 w-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0"
+                aria-hidden="true">
+                <path d="m21 21-4.34-4.34"></path>
+                <circle cx="11" cy="11" r="8"></circle>
+            </svg><input name="q"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10 min-w-0 w-full"
+                placeholder="Search name, phone, location..." value="<%= filters.q || '' %>"></div>
+        <div
+            class="min-w-0 [&amp;_select]:min-w-0 [&amp;_select]:w-full [&amp;_input]:min-w-0 [&amp;_button]:min-w-0 [&amp;_a]:min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <select name="status"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">All Status</option>
+                <option value="New" <%=filters.status==='New' ? 'selected' : '' %>>New</option>
+                <option value="Contacted" <%=filters.status==='Contacted' ? 'selected' : '' %>>Contacted</option>
+                <option value="Interested" <%=filters.status==='Interested' ? 'selected' : '' %>>Interested</option>
+                <option value="Site Visit Scheduled" <%=filters.status==='Site Visit Scheduled' ? 'selected' : '' %>
+                    >Site Visit Scheduled</option>
+                <option value="Site Visit Completed" <%=filters.status==='Site Visit Completed' ? 'selected' : '' %>
+                    >Site Visit Completed</option>
+                <option value="Negotiation" <%=filters.status==='Negotiation' ? 'selected' : '' %>>Negotiation</option>
+                <option value="Booking Pending" <%=filters.status==='Booking Pending' ? 'selected' : '' %>>Booking
+                    Pending</option>
+                <option value="Booked" <%=filters.status==='Booked' ? 'selected' : '' %>>Booked</option>
+                <option value="Payment Running" <%=filters.status==='Payment Running' ? 'selected' : '' %>>Payment
+                    Running</option>
+                <option value="Sold" <%=filters.status==='Sold' ? 'selected' : '' %>>Sold</option>
+                <option value="Lost" <%=filters.status==='Lost' ? 'selected' : '' %>>Lost</option>
+            </select><select name="source"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">All Sources</option>
+                <option value="website" <%=filters.source==='website' ? 'selected' : '' %>>website</option>
+                <option value="facebook" <%=filters.source==='facebook' ? 'selected' : '' %>>facebook</option>
+                <option value="google" <%=filters.source==='google' ? 'selected' : '' %>>google</option>
+                <option value="whatsapp" <%=filters.source==='whatsapp' ? 'selected' : '' %>>whatsapp</option>
+                <option value="phone" <%=filters.source==='phone' ? 'selected' : '' %>>phone</option>
+                <option value="referral" <%=filters.source==='referral' ? 'selected' : '' %>>referral</option>
+                <option value="walk in" <%=filters.source==='walk in' ? 'selected' : '' %>>walk in</option>
+            </select><select name="priority"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">Priority</option>
+                <option value="Hot" <%=filters.priority==='Hot' ? 'selected' : '' %>>Hot</option>
+                <option value="Warm" <%=filters.priority==='Warm' ? 'selected' : '' %>>Warm</option>
+                <option value="Cold" <%=filters.priority==='Cold' ? 'selected' : '' %>>Cold</option>
+            </select><select name="assignedUser"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">All Employees</option>
+                <% users.forEach((employee)=> { %>
+                    <option value="<%= employee._id %>" <%=filters.assignedUser===String(employee._id) ? 'selected' : ''
+                        %>><%= employee.name %>
+                    </option>
+                    <% }) %>
+            </select><select name="propertyType"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">Property Type</option>
+                <option value="Land Share" <%=filters.propertyType==='Land Share' ? 'selected' : '' %>>Land Share
+                </option>
+                <option value="Ready Flat" <%=filters.propertyType==='Ready Flat' ? 'selected' : '' %>>Ready Flat
+                </option>
+                <option value="Land / Plot" <%=filters.propertyType==='Land / Plot' ? 'selected' : '' %>>Land / Plot
+                </option>
+                <option value="Commercial" <%=filters.propertyType==='Commercial' ? 'selected' : '' %>>Commercial
+                </option>
+                <option value="Upcoming Project" <%=filters.propertyType==='Upcoming Project' ? 'selected' : '' %>
+                    >Upcoming Project</option>
+            </select>
+            <div class="grid grid-cols-2 gap-3 sm:col-span-2 lg:col-span-3 xl:col-span-1">
+                <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-11 px-5 py-2 min-w-0 w-full rounded-xl">Apply
+                    Filter</button>
+                <a href="/leads"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-11 px-5 py-2 min-w-0 w-full rounded-xl">Reset</a>
+            </div>
+        </div>
+    </div>
+</form>

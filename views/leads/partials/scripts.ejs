@@ -1,0 +1,232 @@
+<script>
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const leadModal = document.getElementById('leadModal');
+
+    function openModal() {
+        leadModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        leadModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+
+    if (leadModal) {
+        leadModal.addEventListener('click', (e) => {
+            if (e.target === leadModal) {
+                closeModal();
+            }
+        });
+    }
+
+    function openEditModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            const lead = JSON.parse(leadAttr);
+            openEditModal(lead);
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    function openDeleteModalFromButton(button) {
+        const leadId = button.getAttribute('data-id');
+        if (leadId) {
+            openDeleteModal(leadId);
+        }
+    }
+
+    function openViewModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            const lead = JSON.parse(leadAttr);
+            openViewModal(lead);
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    window.openEditModalFromButton = openEditModalFromButton;
+    window.openDeleteModalFromButton = openDeleteModalFromButton;
+    window.openViewModalFromButton = openViewModalFromButton;
+
+    document.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.edit-lead-btn');
+        if (editButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openEditModalFromButton(editButton);
+            return;
+        }
+
+        const deleteButton = event.target.closest('.delete-lead-btn');
+        if (deleteButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openDeleteModalFromButton(deleteButton);
+            return;
+        }
+
+        const viewButton = event.target.closest('.view-lead-btn');
+        if (viewButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openViewModalFromButton(viewButton);
+        }
+    });
+
+    function openEditModal(lead) {
+        const modal = document.getElementById('editLeadModal');
+        const form = document.getElementById('editLeadForm');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !modalPanel) return;
+
+        form.action = `/leads/update/${lead._id}`;
+
+        document.getElementById('edit_customerName').value = lead.customerName || '';
+        document.getElementById('edit_phone').value = lead.phone || '';
+        document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
+        document.getElementById('edit_propertyType').value = lead.propertyType || '';
+        document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
+        document.getElementById('edit_budgetMax').value = lead.budgetMax || '';
+        document.getElementById('edit_preferredSize').value = lead.preferredSize || '';
+        document.getElementById('edit_bedrooms').value = lead.bedrooms || '';
+        document.getElementById('edit_purpose').value = lead.purpose || '';
+        document.getElementById('edit_source').value = lead.source || '';
+        document.getElementById('edit_assignedUser').value = (lead.assignedUser && (lead.assignedUser._id || lead.assignedUser)) || '';
+        document.getElementById('edit_priority').value = lead.priority || '';
+        document.getElementById('edit_status').value = lead.status || 'new';
+        document.getElementById('edit_messageNote').value = lead.messageNote || '';
+
+        if (lead.followUpDate) {
+            const date = new Date(lead.followUpDate);
+            const formattedDate = date.toISOString().split('T')[0];
+            document.getElementById('edit_followUpDate').value = formattedDate;
+        } else {
+            document.getElementById('edit_followUpDate').value = '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 150);
+    }
+
+    function openDeleteModal(leadId) {
+        const modal = document.getElementById('deleteLeadModal');
+        const form = document.getElementById('deleteLeadForm');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !modalPanel) return;
+
+        form.action = `/leads/delete/${leadId}`;
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 150);
+    }
+
+    function openViewModal(lead) {
+        const modal = document.getElementById('viewLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+
+        const formatValue = (value) => value || '—';
+        const formatDate = (value) => {
+            if (!value) return '—';
+            try {
+                return new Date(value).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                return value;
+            }
+        };
+
+        document.getElementById('view_referenceNumber').textContent = formatValue(lead.referenceNumber || lead.leadNumber || lead._id);
+        document.getElementById('view_customerName').textContent = formatValue(lead.customerName);
+        document.getElementById('view_phone').textContent = formatValue(lead.phone);
+        document.getElementById('view_preferredLocation').textContent = formatValue(lead.preferredLocation);
+        document.getElementById('view_propertyType').textContent = formatValue(lead.propertyType);
+        document.getElementById('view_budget').textContent = `৳${lead.budgetMin || 0} - ৳${lead.budgetMax || 0}`;
+        document.getElementById('view_preferredSize').textContent = formatValue(lead.preferredSize);
+        document.getElementById('view_bedrooms').textContent = formatValue(lead.bedrooms);
+        document.getElementById('view_purpose').textContent = formatValue(lead.purpose);
+        document.getElementById('view_assignedUser').textContent = formatValue(lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned');
+        document.getElementById('view_source').textContent = formatValue(lead.source);
+        document.getElementById('view_priority').textContent = formatValue(lead.priority);
+        document.getElementById('view_status').textContent = formatValue(lead.status);
+        document.getElementById('view_followUpDate').textContent = formatDate(lead.followUpDate);
+        document.getElementById('view_messageNote').textContent = formatValue(lead.messageNote);
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeViewModal() {
+        const modal = document.getElementById('viewLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 150);
+    }
+
+    window.onclick = function (event) {
+        const editModal = document.getElementById('editLeadModal');
+        const deleteModal = document.getElementById('deleteLeadModal');
+        const viewModal = document.getElementById('viewLeadModal');
+
+        if (event.target == editModal) {
+            closeEditModal();
+        }
+        if (event.target == deleteModal) {
+            closeDeleteModal();
+        }
+        if (event.target == viewModal) {
+            closeViewModal();
+        }
+    };
+</script>

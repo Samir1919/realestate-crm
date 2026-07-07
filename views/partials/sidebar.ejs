@@ -1,43 +1,75 @@
 <!-- সাইডবার: প্রিমিয়াম হোয়াইট ব্যাকগ্রাউন্ড (bg-white) এবং হালকা গ্রে বর্ডার (border-gray-200) -->
-<div id="sidebar" class="w-64 bg-white text-gray-800 flex flex-col justify-between flex-shrink-0 transition-all duration-300 overflow-hidden fixed inset-y-0 left-0 z-50 md:relative border-r border-gray-200">
+<div id="sidebar"
+    class="w-64 bg-white text-gray-800 flex flex-col justify-between flex-shrink-0 transition-all duration-300 overflow-hidden fixed inset-y-0 left-0 z-50 md:relative border-r border-gray-200">
     <div class="p-5">
         <!-- লোগো এবং টগল বাটন -->
         <div class="flex items-center justify-between h-10">
             <!-- লোগো টেক্সট (নীল রঙের প্রিমিয়াম টাচ) -->
-            <h1 id="logo-text" class="text-xl font-bold tracking-wider text-blue-600 flex items-center gap-2 whitespace-nowrap transition-opacity duration-200 opacity-100">
+            <h1 id="logo-text"
+                class="text-xl font-bold tracking-wider text-blue-600 flex items-center gap-2 whitespace-nowrap transition-opacity duration-200 opacity-100">
                 <i class="fa-solid fa-city"></i> EstateCRM
             </h1>
             <!-- সাইڈবার টগল বাটন (হালকা গ্রে হোভার ইফেক্ট) -->
-            <button id="toggle-sidebar" class="text-gray-500 hover:text-gray-900 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0">
+            <button id="toggle-sidebar"
+                class="text-gray-500 hover:text-gray-900 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0">
                 <i class="fa-solid fa-bars text-lg"></i>
             </button>
         </div>
 
         <!-- মেনু লিঙ্কসমূহ -->
         <nav class="mt-8 space-y-1.5">
-            <a href="/" class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap" title="Dashboard">
-                <i class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0 text-gray-400 group-hover:text-blue-600"></i>
-                <span class="sidebar-label transition-opacity duration-200 opacity-100">Dashboard</span>
-            </a>
-            <a href="/leads" class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap" title="Leads & Customers">
-                <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
-                <span class="sidebar-label transition-opacity duration-200 opacity-100">Leads & Customers</span>
-            </a>
-            <a href="/kanban" class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap" title="Sales Pipeline">
-                <i class="fa-solid fa-table-columns w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
-                <span class="sidebar-label transition-opacity duration-200 opacity-100">Sales Pipeline</span>
-            </a>
+            <% if (permissions && permissions.viewLeads) { %>
+                <a href="/"
+                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                    title="Dashboard">
+                    <i
+                        class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0 text-gray-400 group-hover:text-blue-600"></i>
+                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Dashboard</span>
+                </a>
+                <a href="/leads"
+                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                    title="Leads & Customers">
+                    <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Leads & Customers</span>
+                </a>
+                <a href="/kanban"
+                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                    title="Sales Pipeline">
+                    <i class="fa-solid fa-table-columns w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Sales Pipeline</span>
+                </a>
+                <% } %>
+                    <% if (permissions && permissions.manageUsers) { %>
+                        <a href="/admin/users"
+                            class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                            title="User Management">
+                            <i class="fa-solid fa-user-shield w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                            <span class="sidebar-label transition-opacity duration-200 opacity-100">User
+                                Management</span>
+                        </a>
+                        <% } %>
+                            <% if (permissions && permissions.manageRoles) { %>
+                                <a href="/admin/roles"
+                                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                                    title="Roles & Permissions">
+                                    <i class="fa-solid fa-key w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Roles &
+                                        Permissions</span>
+                                </a>
+                                <% } %>
         </nav>
     </div>
-    
+
     <!-- ফুটার টেক্সট (হালকা বর্ডার এবং সফট কালার) -->
-    <div id="sidebar-footer" class="p-4 border-t border-gray-100 text-xs text-gray-400 text-center whitespace-nowrap transition-opacity duration-200 opacity-100">
+    <div id="sidebar-footer"
+        class="p-4 border-t border-gray-100 text-xs text-gray-400 text-center whitespace-nowrap transition-opacity duration-200 opacity-100">
         v1.0.0 (MVP)
     </div>
 </div>
 
 <!-- মোবাইল স্ক্রিনের জন্য ওপেন বাটন (ম্যাচিং ডার্ক বাটন যাতে সাদার ওপর সুন্দর ফুটে ওঠে) -->
-<button id="open-sidebar" class="hidden fixed top-4 left-4 z-40 bg-slate-900 text-white p-2.5 rounded-md shadow-md focus:outline-none">
+<button id="open-sidebar"
+    class="hidden fixed top-4 left-4 z-40 bg-slate-900 text-white p-2.5 rounded-md shadow-md focus:outline-none">
     <i class="fa-solid fa-bars"></i>
 </button>
 

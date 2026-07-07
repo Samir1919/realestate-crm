@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
+const { formatLeadReference } = require('../utils/leadReference');
+const LeadCounter = require('./LeadCounter');
 
 const LeadSchema = new mongoose.Schema({
+  referenceNumber: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true
+  },
+  leadNumber: {
+    type: Number,
+    unique: true,
+    sparse: true
+  },
+
   // কাস্টমার সংক্রান্ত তথ্য
   customerName: {
     type: String,
@@ -62,13 +76,13 @@ const LeadSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: [
-      'New', 'Contacted', 'Interested', 'Site Visit Scheduled', 
-      'Site Visit Completed', 'Negotiation', 'Booking Pending', 
+      'New', 'Contacted', 'Interested', 'Site Visit Scheduled',
+      'Site Visit Completed', 'Negotiation', 'Booking Pending',
       'Booked', 'Payment Running', 'Sold', 'Lost'
     ],
     default: 'New'
   },
-  
+
   // ফলো-আপ ও নোটস
   followUpDate: {
     type: Date
@@ -76,9 +90,49 @@ const LeadSchema = new mongoose.Schema({
   messageNote: {
     type: String,
     trim: true
+  },
+  assignedUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true // এর ফলে createdAt এবং updatedAt অটোমেটিক তৈরি হবে
+});
+
+LeadSchema.pre('save', async function () {
+  if (!this.isNew || this.referenceNumber) {
+    return;
+  }
+
+  try {
+    const existingCounter = await LeadCounter.findById('lead');
+
+    if (!existingCounter) {
+      const highestLead = await this.constructor
+        .findOne({ leadNumber: { $exists: true } })
+        .sort({ leadNumber: -1 })
+        .select('leadNumber');
+
+      const initialSeq = highestLead?.leadNumber || 0;
+      await LeadCounter.findByIdAndUpdate(
+        'lead',
+        { $setOnInsert: { seq: initialSeq } },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+      );
+    }
+
+    const counter = await LeadCounter.findByIdAndUpdate(
+      'lead',
+      { $inc: { seq: 1 } },
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
+    );
+
+    this.leadNumber = counter.seq;
+    this.referenceNumber = formatLeadReference(counter.seq, process.env.LEAD_REFERENCE_PREFIX || 'LD', 6);
+  } catch (error) {
+    throw error;
+  }
 });
 
 const Lead = mongoose.model('Lead', LeadSchema);
