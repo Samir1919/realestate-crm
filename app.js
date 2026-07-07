@@ -20,9 +20,38 @@ const app = express();
 // Database Connection
 connectDB();
 
+async function ensureInitialAdminUser() {
+    const adminExists = await User.exists({ role: 'admin' });
+    if (adminExists) {
+        return;
+    }
+
+    const adminEmail = String(process.env.ADMIN_EMAIL || 'admin@crm.com').trim().toLowerCase();
+    const adminPassword = String(process.env.ADMIN_PASSWORD || '123456').trim();
+    const adminName = String(process.env.ADMIN_NAME || 'Admin User').trim() || 'Admin User';
+
+    const configuredUser = await User.findOne({ email: adminEmail });
+    if (configuredUser) {
+        configuredUser.role = 'admin';
+        await configuredUser.save();
+        console.log(`✅ Promoted existing user to admin: ${adminEmail}`);
+        return;
+    }
+
+    await User.create({
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        role: 'admin'
+    });
+
+    console.log(`✅ Created initial admin user: ${adminEmail}`);
+}
+
 // Seed core roles/permissions and warm cache
 ensureDefaultAccessData()
     .then(refreshPermissionsCache)
+    .then(ensureInitialAdminUser)
     .catch((err) => console.error('Failed to initialize access data:', err.message));
 
 // View Engine Setup
@@ -106,23 +135,25 @@ app.get('/logout', (req, res) => {
     });
 });
 
-app.get('/seed-user', async (req, res) => {
-    try {
-        const existing = await User.findOne({ email: 'admin@crm.com' });
-        if (!existing) {
-            await User.create({
-                name: 'Admin User',
-                email: 'admin@crm.com',
-                password: '123456',
-                role: 'admin'
-            });
-        }
+if (process.env.NODE_ENV !== 'production') {
+    app.get('/seed-user', async (req, res) => {
+        try {
+            const existing = await User.findOne({ email: 'admin@crm.com' });
+            if (!existing) {
+                await User.create({
+                    name: 'Admin User',
+                    email: 'admin@crm.com',
+                    password: '123456',
+                    role: 'admin'
+                });
+            }
 
-        res.send('Seeded admin account: admin@crm.com / 123456');
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
+            res.send('Seeded admin account: admin@crm.com / 123456');
+        } catch (err) {
+            res.status(500).send(err.message);
+        }
+    });
+}
 
 app.use((req, res, next) => {
     if (req.path === '/login' || req.path === '/logout') {
