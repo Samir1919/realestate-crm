@@ -317,7 +317,7 @@
                                                         <button
                                                             class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
                                                             title="Edit"
-                                                            onclick='openEditModal(<%- JSON.stringify(lead) %>)'>
+                                                            onclick='openEditModal(<%= JSON.stringify(lead) %>)'>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24"
                                                                 height="24" viewBox="0 0 24 24" fill="none"
                                                                 stroke="currentColor" stroke-width="2"
@@ -445,7 +445,7 @@
                                     </a>
                                     <button
                                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-slate-100 text-slate-700 h-8 w-8"
-                                        title="Edit" onclick='openEditModal(<%- JSON.stringify(lead) %>)'>
+                                        title="Edit" onclick='openEditModal(<%= JSON.stringify(lead) %>)'>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round"
@@ -747,320 +747,324 @@
                 </form>
 
             </div>
-        </div>
 
-        <!-- ==========================================
+
+            <!-- ==========================================
      TAILWIND CSS MODAL: EDIT LEAD POPUP
      ========================================== -->
-        <div id="editLeadModal"
-            class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div
-                class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col scale-95 transition-all duration-300">
-                <!-- Header -->
-                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-900">Edit Lead Details</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">লিডের প্রয়োজনীয় তথ্য এখানে আপডেট করুন।</p>
+            <div id="editLeadModal"
+                class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div
+                    class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col scale-95 transition-all duration-300">
+                    <!-- Header -->
+                    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">Edit Lead Details</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">লিডের প্রয়োজনীয় তথ্য এখানে আপডেট করুন।</p>
+                        </div>
+                        <button onclick="closeEditModal()"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                     </div>
-                    <button onclick="closeEditModal()"
-                        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
+
+                    <!-- Form Body -->
+                    <form id="editLeadForm" method="POST" class="overflow-y-auto p-6 space-y-4 flex-1">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Customer Name *</label>
+                                <input type="text" name="customerName" id="edit_customerName" required
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Phone *</label>
+                                <input type="text" name="phone" id="edit_phone" required
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred
+                                    Location</label>
+                                <input type="text" name="preferredLocation" id="edit_preferredLocation"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Property Type</label>
+                                <select name="propertyType" id="edit_propertyType"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Property Type</option>
+                                    <option value="apartment">Apartment</option>
+                                    <option value="ready_flat">Ready Flat</option>
+                                    <option value="plot">Land / Plot</option>
+                                    <option value="commercial">Commercial</option>
+                                    <option value="upcoming_project">Upcoming Project</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Min</label>
+                                <input type="number" name="budgetMin" id="edit_budgetMin"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Max</label>
+                                <input type="number" name="budgetMax" id="edit_budgetMax"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Size
+                                    (Sft)</label>
+                                <input type="text" name="preferredSize" id="edit_preferredSize"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Bedrooms</label>
+                                <input type="number" name="bedrooms" id="edit_bedrooms"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Purpose</label>
+                                <select name="purpose" id="edit_purpose"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Purpose</option>
+                                    <option value="buy">Buy</option>
+                                    <option value="rent">Rent</option>
+                                    <option value="investment">Investment</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Source</label>
+                                <select name="source" id="edit_source"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Source</option>
+                                    <option value="website">website</option>
+                                    <option value="facebook">facebook</option>
+                                    <option value="google">google</option>
+                                    <option value="whatsapp">whatsapp</option>
+                                    <option value="phone">phone</option>
+                                    <option value="referral">referral</option>
+                                    <option value="walk_in">walk in</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
+                                <select name="priority" id="edit_priority"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Priority</option>
+                                    <option value="hot">Hot</option>
+                                    <option value="warm">Warm</option>
+                                    <option value="cold">Cold</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                                <select name="status" id="edit_status"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="interested">Interested</option>
+                                    <option value="site_visit_scheduled">Site Visit Scheduled</option>
+                                    <option value="site_visit_completed">Site Visit Completed</option>
+                                    <option value="negotiation">Negotiation</option>
+                                    <option value="booking_pending">Booking Pending</option>
+                                    <option value="booked">Booked</option>
+                                    <option value="payment_running">Payment Running</option>
+                                    <option value="sold">Sold</option>
+                                    <option value="lost">Lost</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Follow Up Date</label>
+                                <input type="date" name="followUpDate" id="edit_followUpDate"
+                                    class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Message / Note</label>
+                            <textarea name="messageNote" id="edit_messageNote" rows="3"
+                                class="w-full rounded-[10px] border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+
+                        <!-- Footer Buttons -->
+                        <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                            <button type="button" onclick="closeEditModal()"
+                                class="px-4 py-2 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">Cancel</button>
+                            <button type="submit"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FF6B2C] to-amber-500 rounded-xl shadow-md hover:opacity-95 transition-all">Save
+                                Changes</button>
+                        </div>
+                    </form>
                 </div>
-
-                <!-- Form Body -->
-                <form id="editLeadForm" method="POST" class="overflow-y-auto p-6 space-y-4 flex-1">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Customer Name *</label>
-                            <input type="text" name="customerName" id="edit_customerName" required
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Phone *</label>
-                            <input type="text" name="phone" id="edit_phone" required
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Location</label>
-                            <input type="text" name="preferredLocation" id="edit_preferredLocation"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Property Type</label>
-                            <select name="propertyType" id="edit_propertyType"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select Property Type</option>
-                                <option value="apartment">Apartment</option>
-                                <option value="ready_flat">Ready Flat</option>
-                                <option value="plot">Land / Plot</option>
-                                <option value="commercial">Commercial</option>
-                                <option value="upcoming_project">Upcoming Project</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Min</label>
-                            <input type="number" name="budgetMin" id="edit_budgetMin"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Budget Max</label>
-                            <input type="number" name="budgetMax" id="edit_budgetMax"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Size (Sft)</label>
-                            <input type="text" name="preferredSize" id="edit_preferredSize"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Bedrooms</label>
-                            <input type="number" name="bedrooms" id="edit_bedrooms"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Purpose</label>
-                            <select name="purpose" id="edit_purpose"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select Purpose</option>
-                                <option value="buy">Buy</option>
-                                <option value="rent">Rent</option>
-                                <option value="investment">Investment</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Source</label>
-                            <select name="source" id="edit_source"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select Source</option>
-                                <option value="website">website</option>
-                                <option value="facebook">facebook</option>
-                                <option value="google">google</option>
-                                <option value="whatsapp">whatsapp</option>
-                                <option value="phone">phone</option>
-                                <option value="referral">referral</option>
-                                <option value="walk_in">walk in</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
-                            <select name="priority" id="edit_priority"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select Priority</option>
-                                <option value="hot">Hot</option>
-                                <option value="warm">Warm</option>
-                                <option value="cold">Cold</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
-                            <select name="status" id="edit_status"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="new">New</option>
-                                <option value="contacted">Contacted</option>
-                                <option value="interested">Interested</option>
-                                <option value="site_visit_scheduled">Site Visit Scheduled</option>
-                                <option value="site_visit_completed">Site Visit Completed</option>
-                                <option value="negotiation">Negotiation</option>
-                                <option value="booking_pending">Booking Pending</option>
-                                <option value="booked">Booked</option>
-                                <option value="payment_running">Payment Running</option>
-                                <option value="sold">Sold</option>
-                                <option value="lost">Lost</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Follow Up Date</label>
-                            <input type="date" name="followUpDate" id="edit_followUpDate"
-                                class="w-full h-10 rounded-[10px] border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Message / Note</label>
-                        <textarea name="messageNote" id="edit_messageNote" rows="3"
-                            class="w-full rounded-[10px] border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-
-                    <!-- Footer Buttons -->
-                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                        <button type="button" onclick="closeEditModal()"
-                            class="px-4 py-2 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">Cancel</button>
-                        <button type="submit"
-                            class="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FF6B2C] to-amber-500 rounded-xl shadow-md hover:opacity-95 transition-all">Save
-                            Changes</button>
-                    </div>
-                </form>
             </div>
-        </div>
 
-        <!-- ==========================================
+            <!-- ==========================================
      TAILWIND CSS MODAL: DELETE CONFIRMATION
      ========================================== -->
-        <div id="deleteLeadModal"
-            class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div
-                class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md scale-95 transition-all duration-300 p-6 text-center">
-                <!-- Warning Icon -->
+            <div id="deleteLeadModal"
+                class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
                 <div
-                    class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="h-6 w-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                </div>
-
-                <!-- Modal Content -->
-                <h3 class="text-lg font-bold text-slate-900 mb-2">আপনি কি নিশ্চিত?</h3>
-                <p class="text-sm text-slate-500 mb-6">এই লিডটি চিরতরে ডিলিট হয়ে যাবে। এই অ্যাকশনটি কিন্তু আর ফিরিয়ে আনা
-                    (Undo) সম্ভব হবে না।</p>
-
-                <!-- Form acting as Delete Trigger -->
-                <form id="deleteLeadForm" method="POST">
-                    <div class="flex justify-center gap-3">
-                        <button type="button" onclick="closeDeleteModal()"
-                            class="px-4 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors w-full">
-                            না, থাক
-                        </button>
-                        <button type="submit"
-                            class="px-4 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl shadow-md hover:bg-red-700 transition-colors w-full">
-                            হ্যাঁ, ডিলিট করুন
-                        </button>
+                    class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md scale-95 transition-all duration-300 p-6 text-center">
+                    <!-- Warning Icon -->
+                    <div
+                        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
                     </div>
-                </form>
+
+                    <!-- Modal Content -->
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">আপনি কি নিশ্চিত?</h3>
+                    <p class="text-sm text-slate-500 mb-6">এই লিডটি চিরতরে ডিলিট হয়ে যাবে। এই অ্যাকশনটি কিন্তু আর ফিরিয়ে
+                        আনা
+                        (Undo) সম্ভব হবে না।</p>
+
+                    <!-- Form acting as Delete Trigger -->
+                    <form id="deleteLeadForm" method="POST">
+                        <div class="flex justify-center gap-3">
+                            <button type="button" onclick="closeDeleteModal()"
+                                class="px-4 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors w-full">
+                                না, থাক
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl shadow-md hover:bg-red-700 transition-colors w-full">
+                                হ্যাঁ, ডিলিট করুন
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- lead add button form -->
-        <script>
-            const openModalBtn = document.getElementById('openModalBtn');
-            const closeModalBtn = document.getElementById('closeModalBtn');
-            const cancelModalBtn = document.getElementById('cancelModalBtn');
-            const leadModal = document.getElementById('leadModal');
+            <!-- lead add button form -->
+            <script>
+                const openModalBtn = document.getElementById('openModalBtn');
+                const closeModalBtn = document.getElementById('closeModalBtn');
+                const cancelModalBtn = document.getElementById('cancelModalBtn');
+                const leadModal = document.getElementById('leadModal');
 
-            function openModal() {
-                leadModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // মোডাল খুললে পেজ স্ক্রল বন্ধ থাকবে
-            }
-
-            function closeModal() {
-                leadModal.classList.add('hidden');
-                document.body.style.overflow = 'auto'; // মোডাল বন্ধ হলে পেজ স্ক্রল চালু হবে
-            }
-
-            openModalBtn.addEventListener('click', openModal);
-            closeModalBtn.addEventListener('click', closeModal);
-            cancelModalBtn.addEventListener('click', closeModal);
-
-            // মোডালের বাইরের ফাঁকা জায়গায় ক্লিক করলে বন্ধ হবে
-            leadModal.addEventListener('click', (e) => {
-                if (e.target === leadModal) {
-                    closeModal();
-                }
-            });
-        </script>
-
-        <!-- lead edit button form -->
-        <script>
-            function openEditModal(lead) {
-                const modal = document.getElementById('editLeadModal');
-                const form = document.getElementById('editLeadForm');
-
-                // এখানে আপনার ব্যাকএন্ড রাউট অনুযায়ী আপডেট URL সেট হবে
-                form.action = `/leads/update/${lead._id}`;
-
-                // ফর্ম ইনপুটে ডাটা অটো সেট করার লজিক
-                document.getElementById('edit_customerName').value = lead.customerName || '';
-                document.getElementById('edit_phone').value = lead.phone || '';
-                document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
-                document.getElementById('edit_propertyType').value = lead.propertyType || '';
-                document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
-                document.getElementById('edit_budgetMax').value = lead.budgetMax || '';
-                document.getElementById('edit_preferredSize').value = lead.preferredSize || '';
-                document.getElementById('edit_bedrooms').value = lead.bedrooms || '';
-                document.getElementById('edit_purpose').value = lead.purpose || '';
-                document.getElementById('edit_source').value = lead.source || '';
-                document.getElementById('edit_priority').value = lead.priority || '';
-                document.getElementById('edit_status').value = lead.status || 'new';
-                document.getElementById('edit_messageNote').value = lead.messageNote || '';
-
-                // ডেট ফরম্যাটিং (YYYY-MM-DD ফরম্যাটে ইনপুটে বসানোর জন্য)
-                if (lead.followUpDate) {
-                    const date = new Date(lead.followUpDate);
-                    const formattedDate = date.toISOString().split('T')[0];
-                    document.getElementById('edit_followUpDate').value = formattedDate;
-                } else {
-                    document.getElementById('edit_followUpDate').value = '';
+                function openModal() {
+                    leadModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden'; // মোডাল খুললে পেজ স্ক্রল বন্ধ থাকবে
                 }
 
-                // মোডাল ওপেন করার অ্যানিমেশন ইফেক্ট
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.children[0].classList.remove('scale-95');
-                }, 10);
-            }
-
-            function closeEditModal() {
-                const modal = document.getElementById('editLeadModal');
-                modal.children[0].classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 150);
-            }
-
-            // মোডালের বাইরে ব্যাকড্রপে ক্লিক করলে যেন মোডাল বন্ধ হয়ে যায়
-            window.onclick = function (event) {
-                const modal = document.getElementById('editLeadModal');
-                if (event.target == modal) {
-                    closeEditModal();
+                function closeModal() {
+                    leadModal.classList.add('hidden');
+                    document.body.style.overflow = 'auto'; // মোডাল বন্ধ হলে পেজ স্ক্রল চালু হবে
                 }
-            }
-        </script>
 
-        <!-- lead delete button form -->
-        <script>
-            function openDeleteModal(leadId) {
-                const modal = document.getElementById('deleteLeadModal');
-                const form = document.getElementById('deleteLeadForm');
+                openModalBtn.addEventListener('click', openModal);
+                closeModalBtn.addEventListener('click', closeModal);
+                cancelModalBtn.addEventListener('click', closeModal);
 
-                // ব্যাকএন্ডের ডিলিট রাউট অনুযায়ী অ্যাকশন URL সেট হবে
-                // সাধারণত এক্সপ্রেস-এ ডিলিট করার জন্য আমরা POST বা DELETE মেথড ব্যবহার করি
-                form.action = `/leads/delete/${leadId}`;
+                // মোডালের বাইরের ফাঁকা জায়গায় ক্লিক করলে বন্ধ হবে
+                leadModal.addEventListener('click', (e) => {
+                    if (e.target === leadModal) {
+                        closeModal();
+                    }
+                });
+            </script>
 
-                // মোডাল ওপেন অ্যানিমেশন
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.children[0].classList.remove('scale-95');
-                }, 10);
-            }
+            <!-- lead edit button form -->
+            <script>
+                function openEditModal(lead) {
+                    const modal = document.getElementById('editLeadModal');
+                    const form = document.getElementById('editLeadForm');
 
-            function closeDeleteModal() {
-                const modal = document.getElementById('deleteLeadModal');
-                modal.children[0].classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 150);
-            }
+                    // এখানে আপনার ব্যাকএন্ড রাউট অনুযায়ী আপডেট URL সেট হবে
+                    form.action = `/leads/update/${lead._id}`;
 
-            // আগের window.onclick ফাংশনটি আপডেট করে নিন যাতে দুই মোডালের বাইরেই কাজ করে:
-            window.onclick = function (event) {
-                const editModal = document.getElementById('editLeadModal');
-                const deleteModal = document.getElementById('deleteLeadModal');
+                    // ফর্ম ইনপুটে ডাটা অটো সেট করার লজিক
+                    document.getElementById('edit_customerName').value = lead.customerName || '';
+                    document.getElementById('edit_phone').value = lead.phone || '';
+                    document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
+                    document.getElementById('edit_propertyType').value = lead.propertyType || '';
+                    document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
+                    document.getElementById('edit_budgetMax').value = lead.budgetMax || '';
+                    document.getElementById('edit_preferredSize').value = lead.preferredSize || '';
+                    document.getElementById('edit_bedrooms').value = lead.bedrooms || '';
+                    document.getElementById('edit_purpose').value = lead.purpose || '';
+                    document.getElementById('edit_source').value = lead.source || '';
+                    document.getElementById('edit_priority').value = lead.priority || '';
+                    document.getElementById('edit_status').value = lead.status || 'new';
+                    document.getElementById('edit_messageNote').value = lead.messageNote || '';
 
-                if (event.target == editModal) {
-                    closeEditModal();
+                    // ডেট ফরম্যাটিং (YYYY-MM-DD ফরম্যাটে ইনপুটে বসানোর জন্য)
+                    if (lead.followUpDate) {
+                        const date = new Date(lead.followUpDate);
+                        const formattedDate = date.toISOString().split('T')[0];
+                        document.getElementById('edit_followUpDate').value = formattedDate;
+                    } else {
+                        document.getElementById('edit_followUpDate').value = '';
+                    }
+
+                    // মোডাল ওপেন করার অ্যানিমেশন ইফেক্ট
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.children[0].classList.remove('scale-95');
+                    }, 10);
                 }
-                if (event.target == deleteModal) {
-                    closeDeleteModal();
+
+                function closeEditModal() {
+                    const modal = document.getElementById('editLeadModal');
+                    modal.children[0].classList.add('scale-95');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 150);
                 }
-            }
 
-        </script>
+                // মোডালের বাইরে ব্যাকড্রপে ক্লিক করলে যেন মোডাল বন্ধ হয়ে যায়
+                window.onclick = function (event) {
+                    const modal = document.getElementById('editLeadModal');
+                    if (event.target == modal) {
+                        closeEditModal();
+                    }
+                }
+            </script>
+
+            <!-- lead delete button form -->
+            <script>
+                function openDeleteModal(leadId) {
+                    const modal = document.getElementById('deleteLeadModal');
+                    const form = document.getElementById('deleteLeadForm');
+
+                    // ব্যাকএন্ডের ডিলিট রাউট অনুযায়ী অ্যাকশন URL সেট হবে
+                    // সাধারণত এক্সপ্রেস-এ ডিলিট করার জন্য আমরা POST বা DELETE মেথড ব্যবহার করি
+                    form.action = `/leads/delete/${leadId}`;
+
+                    // মোডাল ওপেন অ্যানিমেশন
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.children[0].classList.remove('scale-95');
+                    }, 10);
+                }
+
+                function closeDeleteModal() {
+                    const modal = document.getElementById('deleteLeadModal');
+                    modal.children[0].classList.add('scale-95');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 150);
+                }
+
+                // আগের window.onclick ফাংশনটি আপডেট করে নিন যাতে দুই মোডালের বাইরেই কাজ করে:
+                window.onclick = function (event) {
+                    const editModal = document.getElementById('editLeadModal');
+                    const deleteModal = document.getElementById('deleteLeadModal');
+
+                    if (event.target == editModal) {
+                        closeEditModal();
+                    }
+                    if (event.target == deleteModal) {
+                        closeDeleteModal();
+                    }
+                }
+
+            </script>
 
 
 
-        <% - include('partials/footer') %>
+            <%- include('partials/footer') %>
