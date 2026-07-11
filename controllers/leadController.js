@@ -559,6 +559,7 @@ exports.getLeads = async (req, res) => {
             canDeleteLead: canAccess(getCurrentRole(req), 'deleteLead'),
             canRequestInactive: canAccess(getCurrentRole(req), 'updateLead') && !canAccess(getCurrentRole(req), 'deleteLead'),
             userRole: getCurrentRole(req),
+            emailSent: req.query.emailSent || null,
             importSummary: {
                 imported: Number.parseInt(req.query.imported || '0', 10) || 0,
                 updated: Number.parseInt(req.query.updated || '0', 10) || 0,
@@ -569,6 +570,23 @@ exports.getLeads = async (req, res) => {
 
     } catch (err) {
         res.status(500).send(err.message);
+    }
+};
+
+exports.emailExportLeads = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'viewLeads')) return;
+
+        if (!process.env.EXPORT_EMAIL_USER || !process.env.EXPORT_EMAIL_PASS) {
+            return res.redirect('/leads?emailSent=error');
+        }
+
+        const { runExport } = require('../jobs/dailyLeadExport');
+        await runExport();
+        res.redirect('/leads?emailSent=1');
+    } catch (err) {
+        console.error('[Email Export] Manual trigger failed:', err.message);
+        res.redirect('/leads?emailSent=error');
     }
 };
 
@@ -614,7 +632,8 @@ exports.exportLeadsCsv = async (req, res) => {
         const csv = [header, ...rows].join('\n');
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="leads-export-${Date.now()}.csv"`);
+        const fileLabel = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Dhaka' }).replace(' ', '_').replace(/:/g, '-');
+        res.setHeader('Content-Disposition', `attachment; filename="leads-${fileLabel}.csv"`);
         res.status(200).send(csv);
     } catch (err) {
         res.status(500).send(err.message);

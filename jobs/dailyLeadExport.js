@@ -63,7 +63,7 @@ async function buildLeadsCSV() {
 
 // ─── Email Sender ─────────────────────────────────────────────────────────────
 
-async function sendExportEmail(csvData, dateLabel) {
+async function sendExportEmail(csvData, dateLabel, displayLabel) {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -77,8 +77,8 @@ async function sendExportEmail(csvData, dateLabel) {
     await transporter.sendMail({
         from: `"CRM Auto Export" <${process.env.EXPORT_EMAIL_USER}>`,
         to: recipients,
-        subject: `📊 Daily Lead Export — ${dateLabel}`,
-        text: `আজকের (${dateLabel}) সব active lead-এর CSV file attached আছে।`,
+        subject: `📊 Lead Export — ${displayLabel}`,
+        text: `Lead export (${displayLabel}) — সব lead-এর CSV file attached আছে।`,
         attachments: [
             {
                 filename: `leads-${dateLabel}.csv`,
@@ -92,11 +92,15 @@ async function sendExportEmail(csvData, dateLabel) {
 // ─── Main Job ─────────────────────────────────────────────────────────────────
 
 async function runExport() {
-    const dateLabel = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const now = new Date();
+    // filename safe: 2026-07-11_23-00-00
+    const dateLabel = now.toLocaleString('sv-SE', { timeZone: 'Asia/Dhaka' }).replace(' ', '_').replace(/:/g, '-');
+    // human readable: 2026-07-11 23:00:00
+    const displayLabel = now.toLocaleString('sv-SE', { timeZone: 'Asia/Dhaka' });
     console.log(`[Lead Export] Starting daily export for ${dateLabel}...`);
     try {
         const csv = await buildLeadsCSV();
-        await sendExportEmail(csv, dateLabel);
+        await sendExportEmail(csv, dateLabel, displayLabel);
         console.log(`[Lead Export] ✅ Email sent successfully for ${dateLabel}`);
     } catch (err) {
         console.error(`[Lead Export] ❌ Failed: ${err.message}`);

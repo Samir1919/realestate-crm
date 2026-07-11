@@ -32,6 +32,7 @@ router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.get
 router.get('/leads', leadController.getLeads);
 router.post('/leads', leadController.addLead);
 router.get('/leads/export.csv', leadController.exportLeadsCsv);
+router.post('/leads/email-export', requireRoutePermission('viewLeads'), leadController.emailExportLeads);
 router.post('/leads/import', leadController.importLeadsCsv);
 router.post('/leads/update/:id', leadController.updateLead);
 router.post('/leads/assign-bulk', leadController.bulkAssignLeads);
