@@ -56,6 +56,37 @@ test('lead request filter normalizes supported request states', () => {
     assert.equal(__testables.normalizeLeadRequestFilter('unknown'), '');
 });
 
+test('lead type filter normalizes supported types', () => {
+    assert.equal(__testables.normalizeLeadType('good'), 'good');
+    assert.equal(__testables.normalizeLeadType('BAD'), 'bad');
+    assert.equal(__testables.normalizeLeadType('spam'), 'spam');
+    assert.equal(__testables.normalizeLeadType('unknown'), '');
+});
+
+test('lead follow-up filter normalizes supported values', () => {
+    assert.equal(__testables.normalizeLeadFollowUpFilter('today'), 'today');
+    assert.equal(__testables.normalizeLeadFollowUpFilter('unknown'), '');
+});
+
+test('lead type query builder keeps legacy rows inside good filter', () => {
+    assert.deepEqual(__testables.buildLeadTypeQuery('good'), {
+        $or: [
+            { leadType: 'good' },
+            { leadType: { $exists: false } },
+            { leadType: null }
+        ]
+    });
+    assert.deepEqual(__testables.buildLeadTypeQuery('spam'), { leadType: 'spam' });
+});
+
+test('lead follow-up query builder supports today filter', () => {
+    const query = __testables.buildLeadFollowUpQuery('today');
+
+    assert.ok(query.followUpDate);
+    assert.ok(query.followUpDate.$gte instanceof Date);
+    assert.ok(query.followUpDate.$lte instanceof Date);
+});
+
 test('lead request query builder supports pending and none states', () => {
     assert.deepEqual(__testables.buildLeadRequestQuery('pending'), {
         'inactiveRequest.status': 'pending'
@@ -74,4 +105,76 @@ test('lead form active flag parses boolean-like values safely', () => {
     assert.equal(__testables.parseLeadActiveValue('true'), true);
     assert.equal(__testables.parseLeadActiveValue('false'), false);
     assert.equal(__testables.parseLeadActiveValue('inactive'), false);
+});
+
+test('lead id normalization keeps only valid object ids', () => {
+    const validIdA = new mongoose.Types.ObjectId().toString();
+    const validIdB = new mongoose.Types.ObjectId().toString();
+
+    const normalized = __testables.normalizeLeadIds([
+        validIdA,
+        'invalid-id',
+        ` ${validIdB} `,
+        ''
+    ]);
+
+    assert.deepEqual(normalized, [validIdA, validIdB]);
+});
+
+test('lead list filters can include lead type', () => {
+    const query = __testables.applyLeadListFilters({}, {
+        q: '',
+        status: '',
+        leadType: 'spam',
+        source: '',
+        priority: '',
+        assignedUser: '',
+        propertyType: '',
+        activity: 'active',
+        requestState: ''
+    });
+
+    assert.deepEqual(query.isActive, { $ne: false });
+    assert.deepEqual(query.$and, [{ leadType: 'spam' }]);
+});
+
+test('good lead type filter includes rows without explicit leadType', () => {
+    const query = __testables.applyLeadListFilters({}, {
+        q: '',
+        status: '',
+        leadType: 'good',
+        followUp: '',
+        source: '',
+        priority: '',
+        assignedUser: '',
+        propertyType: '',
+        activity: 'active',
+        requestState: ''
+    });
+
+    assert.deepEqual(query.$and, [{
+        $or: [
+            { leadType: 'good' },
+            { leadType: { $exists: false } },
+            { leadType: null }
+        ]
+    }]);
+});
+
+test('lead list filters can include today follow-up condition', () => {
+    const query = __testables.applyLeadListFilters({}, {
+        q: '',
+        status: '',
+        leadType: '',
+        followUp: 'today',
+        source: '',
+        priority: '',
+        assignedUser: '',
+        propertyType: '',
+        activity: 'active',
+        requestState: ''
+    });
+
+    assert.equal(query.$and.length, 1);
+    assert.ok(query.$and[0].followUpDate);
 });

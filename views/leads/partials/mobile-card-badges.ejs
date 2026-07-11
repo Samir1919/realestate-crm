@@ -22,6 +22,10 @@
                                 class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium capitalize whitespace-nowrap bg-amber-100 text-amber-700 border-amber-200">
                                 <%= lead.priority %>
                             </span>
+                            <span
+                                class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium uppercase whitespace-nowrap <%= lead.leadType === 'spam' ? 'bg-rose-100 text-rose-700 border-rose-200' : lead.leadType === 'bad' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-cyan-100 text-cyan-700 border-cyan-200' %>">
+                                <%= lead.leadType || 'good' %>
+                            </span>
                             <span class="text-xs text-slate-500">
                                 <%= lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned'
                                     %>

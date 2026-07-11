@@ -34,6 +34,7 @@ router.post('/leads', leadController.addLead);
 router.get('/leads/export.csv', leadController.exportLeadsCsv);
 router.post('/leads/import', leadController.importLeadsCsv);
 router.post('/leads/update/:id', leadController.updateLead);
+router.post('/leads/assign-bulk', leadController.bulkAssignLeads);
 router.post('/leads/request-inactive/:id', leadController.requestLeadInactive);
 router.post('/leads/delete/:id', leadController.deleteLead);
 router.post('/leads/reject-inactive/:id', leadController.rejectLeadInactiveRequest);

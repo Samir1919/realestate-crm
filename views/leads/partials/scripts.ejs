@@ -11,11 +11,28 @@
     const importCsvInput = document.getElementById('importCsvInput');
     const addLeadForm = document.getElementById('addLeadForm');
     const editLeadForm = document.getElementById('editLeadForm');
+    const selectAllLeads = document.getElementById('selectAllLeads');
+    const bulkAssignPanel = document.getElementById('bulkAssignPanel');
+    const bulkAssignUser = document.getElementById('bulkAssignUser');
+    const bulkAssignBtn = document.getElementById('bulkAssignBtn');
+    const bulkClearSelectionBtn = document.getElementById('bulkClearSelectionBtn');
+    const bulkClearPageSelectionBtn = document.getElementById('bulkClearPageSelectionBtn');
+    const bulkSelectedCount = document.getElementById('bulkSelectedCount');
+    const bulkAssignConfirmModal = document.getElementById('bulkAssignConfirmModal');
+    const bulkAssignConfirmSummary = document.getElementById('bulkAssignConfirmSummary');
+    const bulkAssignConfirmAssignee = document.getElementById('bulkAssignConfirmAssignee');
+    const bulkAssignPreviewList = document.getElementById('bulkAssignPreviewList');
+    const bulkAssignPreviewMeta = document.getElementById('bulkAssignPreviewMeta');
+    const confirmBulkAssignBtn = document.getElementById('confirmBulkAssignBtn');
+    const cancelBulkAssignConfirmBtn = document.getElementById('cancelBulkAssignConfirmBtn');
+    const closeBulkAssignConfirmModalBtn = document.getElementById('closeBulkAssignConfirmModalBtn');
     const addPhoneInput = document.getElementById('lead_phone');
     const editPhoneInput = document.getElementById('edit_phone');
     const addPhoneInlineError = document.getElementById('addPhoneInlineError');
     const phoneValidationMessage = 'সঠিক ফোন নম্বর দিন। দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile।';
     const leadDraftStorageKey = 'lead-form-draft-v1';
+    const bulkSelectionStorageKey = 'lead-bulk-selection-v1';
+    const selectedLeadIds = new Set();
 
     let bodyScrollLocks = 0;
     let leadModalCloseTimer = null;
@@ -287,6 +304,317 @@
     }
 
     setupFormKeyboardFlow(addLeadForm);
+
+    function restoreBulkSelectionFromStorage() {
+        const raw = sessionStorage.getItem(bulkSelectionStorageKey);
+        if (!raw) {
+            return;
+        }
+
+        try {
+            const storedIds = JSON.parse(raw);
+            if (!Array.isArray(storedIds)) {
+                return;
+            }
+
+            storedIds.forEach((id) => {
+                const normalized = String(id || '').trim();
+                if (normalized) {
+                    selectedLeadIds.add(normalized);
+                }
+            });
+        } catch (error) {
+            sessionStorage.removeItem(bulkSelectionStorageKey);
+        }
+    }
+
+    function persistBulkSelection() {
+        sessionStorage.setItem(bulkSelectionStorageKey, JSON.stringify(Array.from(selectedLeadIds)));
+    }
+
+    function getLeadSelectionCheckboxes() {
+        return Array.from(document.querySelectorAll('.lead-select-checkbox'));
+    }
+
+    function getVisibleLeadIds() {
+        return new Set(getLeadSelectionCheckboxes().map((checkbox) => checkbox.dataset.leadId).filter(Boolean));
+    }
+
+    function getLeadDisplayLabel(leadId) {
+        const leadCheckbox = document.querySelector(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+        if (leadCheckbox && String(leadCheckbox.dataset.leadName || '').trim()) {
+            return leadCheckbox.dataset.leadName.trim();
+        }
+
+        return `Lead ${String(leadId).slice(-6)}`;
+    }
+
+    function updateBulkSelectionUI() {
+        const selectedCount = selectedLeadIds.size;
+        const visibleLeadIds = getVisibleLeadIds();
+        let selectedOnPage = 0;
+
+        visibleLeadIds.forEach((leadId) => {
+            if (selectedLeadIds.has(leadId)) {
+                selectedOnPage += 1;
+            }
+        });
+
+        if (bulkSelectedCount) {
+            bulkSelectedCount.textContent = `Page: ${selectedOnPage} · All: ${selectedCount}`;
+        }
+
+        if (bulkAssignPanel) {
+            bulkAssignPanel.classList.toggle('hidden', selectedCount === 0);
+        }
+
+        if (bulkAssignBtn) {
+            bulkAssignBtn.disabled = selectedCount === 0;
+        }
+
+        const allSelected = visibleLeadIds.size > 0 && Array.from(visibleLeadIds).every((leadId) => selectedLeadIds.has(leadId));
+
+        if (selectAllLeads) {
+            selectAllLeads.checked = allSelected;
+            selectAllLeads.indeterminate = !allSelected && selectedOnPage > 0;
+        }
+
+        persistBulkSelection();
+    }
+
+    function syncLeadCheckboxState(leadId, checked) {
+        if (!leadId) {
+            return;
+        }
+
+        const matchingCheckboxes = document.querySelectorAll(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+        matchingCheckboxes.forEach((checkbox) => {
+            checkbox.checked = checked;
+        });
+    }
+
+    function bindLeadSelectionEvents() {
+        const checkboxes = getLeadSelectionCheckboxes();
+
+        checkboxes.forEach((checkbox) => {
+            const leadId = checkbox.dataset.leadId;
+            if (selectedLeadIds.has(leadId)) {
+                checkbox.checked = true;
+            }
+
+            checkbox.addEventListener('change', () => {
+                const id = checkbox.dataset.leadId;
+                if (!id) {
+                    return;
+                }
+
+                if (checkbox.checked) {
+                    selectedLeadIds.add(id);
+                } else {
+                    selectedLeadIds.delete(id);
+                }
+
+                syncLeadCheckboxState(id, checkbox.checked);
+                updateBulkSelectionUI();
+            });
+        });
+
+        if (selectAllLeads) {
+            selectAllLeads.addEventListener('change', () => {
+                const shouldSelect = selectAllLeads.checked;
+
+                checkboxes.forEach((checkbox) => {
+                    const id = checkbox.dataset.leadId;
+                    if (!id) {
+                        return;
+                    }
+
+                    if (shouldSelect) {
+                        selectedLeadIds.add(id);
+                    } else {
+                        selectedLeadIds.delete(id);
+                    }
+
+                    syncLeadCheckboxState(id, shouldSelect);
+                });
+
+                updateBulkSelectionUI();
+            });
+        }
+
+        if (bulkClearSelectionBtn) {
+            bulkClearSelectionBtn.addEventListener('click', () => {
+                selectedLeadIds.clear();
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = false;
+                });
+                updateBulkSelectionUI();
+            });
+        }
+
+        if (bulkClearPageSelectionBtn) {
+            bulkClearPageSelectionBtn.addEventListener('click', () => {
+                const visibleLeadIds = getVisibleLeadIds();
+
+                visibleLeadIds.forEach((leadId) => {
+                    selectedLeadIds.delete(leadId);
+                    syncLeadCheckboxState(leadId, false);
+                });
+
+                updateBulkSelectionUI();
+            });
+        }
+
+        updateBulkSelectionUI();
+    }
+
+    function getSelectedAssigneeName() {
+        if (!bulkAssignUser) {
+            return 'Unassigned';
+        }
+
+        const selectedOption = bulkAssignUser.options[bulkAssignUser.selectedIndex];
+        return selectedOption ? selectedOption.textContent.trim() : 'Unassigned';
+    }
+
+    function openBulkAssignConfirmModal() {
+        if (!bulkAssignConfirmModal) {
+            submitBulkLeadAssign();
+            return;
+        }
+
+        const totalSelected = selectedLeadIds.size;
+        const visibleLeadIds = getVisibleLeadIds();
+        let selectedOnPage = 0;
+
+        visibleLeadIds.forEach((leadId) => {
+            if (selectedLeadIds.has(leadId)) {
+                selectedOnPage += 1;
+            }
+        });
+
+        if (bulkAssignConfirmSummary) {
+            bulkAssignConfirmSummary.textContent = `You are going to assign ${totalSelected} lead(s) in total. ${selectedOnPage} selected on this page.`;
+        }
+
+        if (bulkAssignConfirmAssignee) {
+            bulkAssignConfirmAssignee.textContent = getSelectedAssigneeName();
+        }
+
+        if (bulkAssignPreviewList) {
+            bulkAssignPreviewList.innerHTML = '';
+
+            const selectedLeadIdList = Array.from(selectedLeadIds);
+            const previewLimit = 8;
+            const previewItems = selectedLeadIdList.slice(0, previewLimit);
+
+            previewItems.forEach((leadId) => {
+                const item = document.createElement('li');
+                item.className = 'rounded border border-slate-200 px-2 py-1';
+                item.textContent = getLeadDisplayLabel(leadId);
+                bulkAssignPreviewList.appendChild(item);
+            });
+
+            if (bulkAssignPreviewMeta) {
+                if (selectedLeadIdList.length > previewLimit) {
+                    bulkAssignPreviewMeta.textContent = `+${selectedLeadIdList.length - previewLimit} more selected lead(s)`;
+                } else {
+                    bulkAssignPreviewMeta.textContent = `${selectedLeadIdList.length} lead(s) selected`;
+                }
+            }
+        }
+
+        bulkAssignConfirmModal.classList.remove('hidden');
+        lockBodyScroll();
+    }
+
+    function closeBulkAssignConfirmModal() {
+        if (!bulkAssignConfirmModal) {
+            return;
+        }
+
+        bulkAssignConfirmModal.classList.add('hidden');
+        unlockBodyScroll();
+    }
+
+    async function submitBulkLeadAssign() {
+        if (!bulkAssignBtn || !bulkAssignUser || selectedLeadIds.size === 0) {
+            return;
+        }
+
+        const previousLabel = bulkAssignBtn.textContent;
+        bulkAssignBtn.disabled = true;
+        bulkAssignBtn.textContent = 'Assigning...';
+
+        try {
+            const payload = new URLSearchParams();
+            payload.set('assignedUser', bulkAssignUser.value || '');
+            selectedLeadIds.forEach((leadId) => {
+                payload.append('leadIds', leadId);
+            });
+
+            const response = await fetch('/leads/assign-bulk', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: payload
+            });
+
+            const data = await response.json().catch(() => null);
+            const message = data && data.message
+                ? data.message
+                : (response.ok ? 'Bulk assignment completed.' : 'Bulk assignment failed.');
+
+            if (!response.ok) {
+                showPopupMessage(message, 'error');
+                return;
+            }
+
+            selectedLeadIds.clear();
+            sessionStorage.removeItem(bulkSelectionStorageKey);
+            showPopupMessage(message, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 450);
+        } catch (error) {
+            showPopupMessage('Server connection failed. Please try again.', 'error');
+        } finally {
+            bulkAssignBtn.disabled = selectedLeadIds.size === 0;
+            bulkAssignBtn.textContent = previousLabel;
+        }
+    }
+
+    restoreBulkSelectionFromStorage();
+    bindLeadSelectionEvents();
+
+    if (bulkAssignBtn) {
+        bulkAssignBtn.addEventListener('click', openBulkAssignConfirmModal);
+    }
+
+    if (cancelBulkAssignConfirmBtn) {
+        cancelBulkAssignConfirmBtn.addEventListener('click', closeBulkAssignConfirmModal);
+    }
+
+    if (closeBulkAssignConfirmModalBtn) {
+        closeBulkAssignConfirmModalBtn.addEventListener('click', closeBulkAssignConfirmModal);
+    }
+
+    if (confirmBulkAssignBtn) {
+        confirmBulkAssignBtn.addEventListener('click', async () => {
+            closeBulkAssignConfirmModal();
+            await submitBulkLeadAssign();
+        });
+    }
+
+    if (bulkAssignConfirmModal) {
+        bulkAssignConfirmModal.addEventListener('click', (event) => {
+            if (event.target === bulkAssignConfirmModal) {
+                closeBulkAssignConfirmModal();
+            }
+        });
+    }
 
     function showPopupMessage(message, type = 'error', options = {}) {
         const { duration = 3200, actions = [] } = options;
@@ -653,6 +981,7 @@
         document.getElementById('edit_source').value = lead.source || '';
         document.getElementById('edit_assignedUser').value = (lead.assignedUser && (lead.assignedUser._id || lead.assignedUser)) || '';
         document.getElementById('edit_priority').value = lead.priority || '';
+        document.getElementById('edit_leadType').value = lead.leadType || 'good';
         document.getElementById('edit_status').value = lead.status || 'new';
         document.getElementById('edit_isActive').value = lead.isActive === false ? 'false' : 'true';
         document.getElementById('edit_messageNote').value = lead.messageNote || '';
@@ -857,6 +1186,7 @@
         document.getElementById('view_assignedUser').textContent = formatValue(lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned');
         document.getElementById('view_source').textContent = formatValue(lead.source);
         document.getElementById('view_priority').textContent = formatValue(lead.priority);
+        document.getElementById('view_leadType').textContent = formatValue((lead.leadType || 'good').toUpperCase());
         document.getElementById('view_status').textContent = formatValue(lead.status);
         document.getElementById('view_isActive').textContent = lead.isActive === false ? 'Inactive' : 'Active';
         document.getElementById('view_followUpDate').textContent = formatDate(lead.followUpDate);

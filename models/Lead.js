@@ -86,6 +86,12 @@ const LeadSchema = new mongoose.Schema({
     ],
     default: 'New'
   },
+  leadType: {
+    type: String,
+    enum: ['good', 'bad', 'spam'],
+    default: 'good',
+    index: true
+  },
   isActive: {
     type: Boolean,
     default: true,

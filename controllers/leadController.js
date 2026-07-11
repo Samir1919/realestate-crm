@@ -15,9 +15,11 @@ const LEAD_CSV_COLUMNS = [
     'bedrooms',
     'purpose',
     'source',
+    'leadType',
     'priority',
     'status',
     'followUpDate',
+    'assignedUserEmail',
     'messageNote'
 ];
 
@@ -224,6 +226,62 @@ function normalizeLeadRequestFilter(value) {
     return '';
 }
 
+function normalizeLeadType(value, fallback = '') {
+    const normalized = String(value || '').trim().toLowerCase();
+
+    if (normalized === 'good' || normalized === 'bad' || normalized === 'spam') {
+        return normalized;
+    }
+
+    return fallback;
+}
+
+function normalizeLeadFollowUpFilter(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+
+    if (normalized === 'today') {
+        return 'today';
+    }
+
+    return '';
+}
+
+function buildLeadTypeQuery(leadType) {
+    if (leadType === 'good') {
+        return {
+            $or: [
+                { leadType: 'good' },
+                { leadType: { $exists: false } },
+                { leadType: null }
+            ]
+        };
+    }
+
+    if (leadType === 'bad' || leadType === 'spam') {
+        return { leadType };
+    }
+
+    return {};
+}
+
+function buildLeadFollowUpQuery(followUp) {
+    if (followUp !== 'today') {
+        return {};
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return {
+        followUpDate: {
+            $gte: startOfToday,
+            $lte: endOfToday
+        }
+    };
+}
+
 function buildLeadActivityQuery(activity) {
     if (activity === 'inactive') {
         return { isActive: false };
@@ -239,6 +297,14 @@ function buildLeadActivityQuery(activity) {
 function parseLeadActiveValue(value) {
     const normalized = String(value === undefined ? 'true' : value).trim().toLowerCase();
     return normalized !== 'false' && normalized !== '0' && normalized !== 'inactive';
+}
+
+function normalizeLeadIds(value) {
+    const values = Array.isArray(value) ? value : [value];
+
+    return values
+        .map((item) => String(item || '').trim())
+        .filter((item) => mongoose.Types.ObjectId.isValid(item));
 }
 
 function buildLeadRequestQuery(requestState) {
@@ -271,6 +337,19 @@ function appendAndCondition(query, condition) {
     query.$and.push(condition);
 }
 
+function withAdditionalCondition(baseQuery, condition) {
+    const query = {
+        ...baseQuery
+    };
+
+    if (baseQuery.$and) {
+        query.$and = [...baseQuery.$and];
+    }
+
+    appendAndCondition(query, condition);
+    return query;
+}
+
 function getLeadListRedirect(req) {
     return req.get('referer') || '/leads';
 }
@@ -279,6 +358,8 @@ function getLeadListFilters(req) {
     return {
         q: (req.query.q || '').trim(),
         status: (req.query.status || '').trim(),
+        leadType: normalizeLeadType(req.query.leadType),
+        followUp: normalizeLeadFollowUpFilter(req.query.followUp),
         source: (req.query.source || '').trim(),
         priority: (req.query.priority || '').trim(),
         assignedUser: (req.query.assignedUser || '').trim(),
@@ -311,7 +392,9 @@ function applyLeadListFilters(baseQuery, filters) {
         query.assignedUser = filters.assignedUser;
     }
 
+    appendAndCondition(query, buildLeadTypeQuery(filters.leadType));
     appendAndCondition(query, buildLeadRequestQuery(filters.requestState));
+    appendAndCondition(query, buildLeadFollowUpQuery(filters.followUp));
 
     return query;
 }
@@ -400,12 +483,7 @@ exports.getLeads = async (req, res) => {
             .select('name email role')
             .sort({ name: 1 });
 
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999);
-
-        const [activeLeadsCount, inactiveLeadsCount, hotLeadsCount, newLeadsCount, todayFollowUpsCount] = await Promise.all([
+        const [activeLeadsCount, inactiveLeadsCount, hotLeadsCount, newLeadsCount, todayFollowUpsCount, goodLeadsCount, badLeadsCount, spamLeadsCount] = await Promise.all([
             Lead.countDocuments({
                 ...scopeQuery,
                 ...buildLeadActivityQuery('active')
@@ -416,13 +494,10 @@ exports.getLeads = async (req, res) => {
             }),
             Lead.countDocuments({ ...query, priority: 'Hot' }),
             Lead.countDocuments({ ...query, status: 'New' }),
-            Lead.countDocuments({
-                ...query,
-                followUpDate: {
-                    $gte: startOfToday,
-                    $lte: endOfToday
-                }
-            })
+            Lead.countDocuments(withAdditionalCondition(query, buildLeadFollowUpQuery('today'))),
+            Lead.countDocuments(withAdditionalCondition(query, buildLeadTypeQuery('good'))),
+            Lead.countDocuments(withAdditionalCondition(query, buildLeadTypeQuery('bad'))),
+            Lead.countDocuments(withAdditionalCondition(query, buildLeadTypeQuery('spam')))
         ]);
 
         // 🔍 নির্দিষ্ট পেজের লিডগুলো নিয়ে আসুন (নতুন লিড সবার আগে থাকবে)
@@ -445,6 +520,8 @@ exports.getLeads = async (req, res) => {
         const queryParams = new URLSearchParams();
         if (filters.q) queryParams.set('q', filters.q);
         if (filters.status) queryParams.set('status', filters.status);
+        if (filters.leadType) queryParams.set('leadType', filters.leadType);
+        if (filters.followUp) queryParams.set('followUp', filters.followUp);
         if (filters.source) queryParams.set('source', filters.source);
         if (filters.priority) queryParams.set('priority', filters.priority);
         if (filters.assignedUser) queryParams.set('assignedUser', filters.assignedUser);
@@ -469,7 +546,10 @@ exports.getLeads = async (req, res) => {
                 pendingInactiveRequestsCount,
                 hotLeadsCount,
                 newLeadsCount,
-                todayFollowUpsCount
+                todayFollowUpsCount,
+                goodLeadsCount,
+                badLeadsCount,
+                spamLeadsCount
             },
             canCreateLead: canAccess(getCurrentRole(req), 'createLead'),
             canUpdateLead: canAccess(getCurrentRole(req), 'updateLead'),
@@ -497,7 +577,10 @@ exports.exportLeadsCsv = async (req, res) => {
         const scopeQuery = buildLeadScopeQuery(req);
         const filters = getLeadListFilters(req);
         const query = applyLeadListFilters(scopeQuery, filters);
-        const leads = await Lead.find(query).sort({ createdAt: -1 }).lean();
+        const leads = await Lead.find(query)
+            .sort({ createdAt: -1 })
+            .populate('assignedUser', 'email')
+            .lean();
 
         const header = LEAD_CSV_COLUMNS.join(',');
         const rows = leads.map((lead) => LEAD_CSV_COLUMNS.map((column) => {
@@ -511,6 +594,10 @@ exports.exportLeadsCsv = async (req, res) => {
                 } catch (error) {
                     return '';
                 }
+            }
+
+            if (column === 'assignedUserEmail') {
+                return escapeCsvValue(lead.assignedUser && lead.assignedUser.email ? lead.assignedUser.email : '');
             }
 
             return escapeCsvValue(lead[column]);
@@ -542,6 +629,7 @@ exports.importLeadsCsv = async (req, res) => {
         const headerValues = parseCsvLine(rows[0]).map((value) => String(value || '').trim());
         const hasHeader = headerValues.includes('phone');
         const dataRows = hasHeader ? rows.slice(1) : rows;
+        const assignedUserEmailCache = new Map();
 
         let importedCount = 0;
         let skippedCount = 0;
@@ -571,6 +659,24 @@ exports.importLeadsCsv = async (req, res) => {
             const normalizedPurpose = rowData.purpose ? String(rowData.purpose).trim() : undefined;
             const normalizedPropertyType = rowData.propertyType ? String(rowData.propertyType).trim() : undefined;
             const normalizedSource = rowData.source ? String(rowData.source).trim() : undefined;
+            const assignedUserEmail = String(rowData.assignedUserEmail || '').trim().toLowerCase();
+            const assignedUserIdRaw = String(rowData.assignedUser || '').trim();
+
+            let resolvedAssignedUser = null;
+
+            if (assignedUserEmail) {
+                if (assignedUserEmailCache.has(assignedUserEmail)) {
+                    resolvedAssignedUser = assignedUserEmailCache.get(assignedUserEmail);
+                } else {
+                    const user = await User.findOne({ email: assignedUserEmail }).select('_id').lean();
+                    resolvedAssignedUser = user ? user._id : null;
+                    assignedUserEmailCache.set(assignedUserEmail, resolvedAssignedUser);
+                }
+            }
+
+            if (!resolvedAssignedUser && assignedUserIdRaw && mongoose.Types.ObjectId.isValid(assignedUserIdRaw)) {
+                resolvedAssignedUser = assignedUserIdRaw;
+            }
 
             try {
                 const lead = new Lead({
@@ -584,9 +690,11 @@ exports.importLeadsCsv = async (req, res) => {
                     bedrooms: rowData.bedrooms ? Number(rowData.bedrooms) : 0,
                     purpose: normalizedPurpose || undefined,
                     source: normalizedSource || undefined,
+                    leadType: normalizeLeadType(rowData.leadType, 'good'),
                     priority: rowData.priority || undefined,
                     status: rowData.status || undefined,
                     followUpDate: rowData.followUpDate || undefined,
+                    assignedUser: resolvedAssignedUser,
                     messageNote: rowData.messageNote || undefined
                 });
 
@@ -621,6 +729,7 @@ exports.addLead = async (req, res) => {
             purpose,
             source,
             assignedUser,
+            leadType,
             priority,
             status,
             isActive,
@@ -651,6 +760,7 @@ exports.addLead = async (req, res) => {
             purpose: normalizedPurpose || undefined,
             source: normalizedSource || undefined,
             assignedUser: assignedUser || null,
+            leadType: normalizeLeadType(leadType, 'good'),
             priority,
             status,
             isActive: parseLeadActiveValue(isActive),
@@ -738,6 +848,7 @@ exports.updateLead = async (req, res) => {
             purpose,
             source,
             assignedUser,
+            leadType,
             priority,
             status,
             isActive,
@@ -767,6 +878,7 @@ exports.updateLead = async (req, res) => {
             purpose: normalizedPurpose || undefined,
             source: normalizedSource || undefined,
             assignedUser: assignedUser || null,
+            leadType: normalizeLeadType(leadType, 'good'),
             priority,
             status,
             isActive: parseLeadActiveValue(isActive),
@@ -780,6 +892,56 @@ exports.updateLead = async (req, res) => {
         if (err.code === 11000) {
             return sendLeadFormError(req, res, 400, duplicateLeadMessage(err, 'এই তথ্যটি অন্য একটি লিডে আগে থেকেই ব্যবহার করা হয়েছে।'));
         }
+        return sendLeadFormError(req, res, 500, err.message);
+    }
+};
+
+exports.bulkAssignLeads = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'updateLead')) {
+            return;
+        }
+
+        const leadIds = normalizeLeadIds(req.body.leadIds);
+        if (!leadIds.length) {
+            return sendLeadFormError(req, res, 400, 'Assign করার জন্য অন্তত ১টি লিড সিলেক্ট করুন।');
+        }
+
+        const assignedUserRaw = String(req.body.assignedUser || '').trim();
+        let assignedUser = null;
+
+        if (assignedUserRaw) {
+            if (!mongoose.Types.ObjectId.isValid(assignedUserRaw)) {
+                return sendLeadFormError(req, res, 400, 'Assigned user সঠিক নয়।');
+            }
+
+            const userExists = await User.exists({ _id: assignedUserRaw });
+            if (!userExists) {
+                return sendLeadFormError(req, res, 400, 'Assigned user পাওয়া যায়নি।');
+            }
+
+            assignedUser = assignedUserRaw;
+        }
+
+        const scopeQuery = buildLeadScopeQuery(req);
+        const result = await Lead.updateMany(
+            {
+                ...scopeQuery,
+                _id: { $in: leadIds }
+            },
+            {
+                $set: {
+                    assignedUser
+                }
+            }
+        );
+
+        if (!result.matchedCount) {
+            return sendLeadFormError(req, res, 404, 'সিলেক্ট করা লিড পাওয়া যায়নি অথবা আপনার access নেই।');
+        }
+
+        return sendLeadFormSuccess(req, res, `${result.modifiedCount} টি লিড assign সফল হয়েছে।`);
+    } catch (err) {
         return sendLeadFormError(req, res, 500, err.message);
     }
 };
@@ -875,8 +1037,14 @@ exports.__testables = {
     normalizeLeadCustomerName,
     normalizeLeadActivityFilter,
     normalizeLeadRequestFilter,
+    normalizeLeadType,
+    normalizeLeadFollowUpFilter,
     buildLeadActivityQuery,
+    buildLeadTypeQuery,
+    buildLeadFollowUpQuery,
     buildLeadRequestQuery,
+    withAdditionalCondition,
     parseLeadActiveValue,
+    normalizeLeadIds,
     applyLeadListFilters
 };

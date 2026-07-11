@@ -1,6 +1,6 @@
-<section class="grid gap-4 min-w-0 w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+<section class="grid gap-4 min-w-0 w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+    <a href="/leads?activity=all"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-blue-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Total Leads</p>
@@ -20,9 +20,9 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-emerald-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Active Leads</p>
@@ -42,9 +42,9 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads?activity=inactive"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-slate-400 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Inactive Leads</p>
@@ -63,9 +63,9 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads?requestState=pending"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-rose-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Pending Inactive Requests</p>
@@ -84,9 +84,9 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads?priority=Hot"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-red-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Hot Leads</p>
@@ -105,9 +105,9 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads?status=New"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-fuchsia-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">New Leads</p>
@@ -129,9 +129,72 @@
                 </svg>
             </div>
         </div>
-    </div>
-    <div
-        class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow">
+    </a>
+    <a href="/leads?leadType=good"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-cyan-300 transition-shadow transition-colors">
+        <div class="flex items-start justify-between gap-3 min-w-0">
+            <div class="min-w-0 flex-1">
+                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Good Leads</p>
+                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">
+                    <%= stats.goodLeadsCount %>
+                </p>
+            </div>
+            <div
+                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-cyan-500 to-sky-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-thumbs-up h-5 w-5 text-white" aria-hidden="true">
+                    <path d="M7 10v12"></path>
+                    <path
+                        d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 0h3a2 2 0 0 1 2 2v1.88a2 2 0 0 1-.06.5Z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+    </a>
+    <a href="/leads?leadType=bad"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-orange-300 transition-shadow transition-colors">
+        <div class="flex items-start justify-between gap-3 min-w-0">
+            <div class="min-w-0 flex-1">
+                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Bad Leads</p>
+                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">
+                    <%= stats.badLeadsCount %>
+                </p>
+            </div>
+            <div
+                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-orange-500 to-amber-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-circle-alert h-5 w-5 text-white" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" x2="12" y1="8" y2="12"></line>
+                    <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                </svg>
+            </div>
+        </div>
+    </a>
+    <a href="/leads?leadType=spam"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-rose-300 transition-shadow transition-colors">
+        <div class="flex items-start justify-between gap-3 min-w-0">
+            <div class="min-w-0 flex-1">
+                <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Spam Leads</p>
+                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">
+                    <%= stats.spamLeadsCount %>
+                </p>
+            </div>
+            <div
+                class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0 from-rose-500 to-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-ban h-5 w-5 text-white" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="m4.9 4.9 14.2 14.2"></path>
+                </svg>
+            </div>
+        </div>
+    </a>
+    <a href="/leads?followUp=today"
+        class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-amber-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">
                 <p class="text-xs sm:text-sm text-slate-500 font-medium safe-truncate">Today Follow-ups</p>
@@ -151,5 +214,5 @@
                 </svg>
             </div>
         </div>
-    </div>
+    </a>
 </section>
