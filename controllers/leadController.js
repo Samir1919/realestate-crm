@@ -93,6 +93,14 @@ function getCurrentUserId(req) {
     return String(req.session.user.id);
 }
 
+function getCurrentUserName(req) {
+    if (!req.session || !req.session.user || !req.session.user.name) {
+        return 'Unknown User';
+    }
+
+    return String(req.session.user.name);
+}
+
 function buildLeadScopeQuery(req) {
     const role = getCurrentRole(req).toLowerCase();
     const userId = getCurrentUserId(req);
@@ -177,13 +185,171 @@ function normalizeOptionalText(value) {
     return normalized;
 }
 
+function normalizeLeadCustomerName(value) {
+    const normalized = normalizeOptionalText(value);
+
+    if (!normalized) {
+        return undefined;
+    }
+
+    const sanitized = normalized
+        .normalize('NFKC')
+        .replace(/[^\p{L}\p{M}\p{N}.' -]+/gu, ' ')
+        .replace(/\s+/g, ' ');
+
+    return sanitized.trim() || undefined;
+}
+
+function normalizeLeadActivityFilter(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+
+    if (normalized === 'inactive') {
+        return 'inactive';
+    }
+
+    if (normalized === 'all') {
+        return 'all';
+    }
+
+    return 'active';
+}
+
+function normalizeLeadRequestFilter(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+
+    if (normalized === 'pending' || normalized === 'approved' || normalized === 'rejected' || normalized === 'none') {
+        return normalized;
+    }
+
+    return '';
+}
+
+function buildLeadActivityQuery(activity) {
+    if (activity === 'inactive') {
+        return { isActive: false };
+    }
+
+    if (activity === 'all') {
+        return {};
+    }
+
+    return { isActive: { $ne: false } };
+}
+
+function parseLeadActiveValue(value) {
+    const normalized = String(value === undefined ? 'true' : value).trim().toLowerCase();
+    return normalized !== 'false' && normalized !== '0' && normalized !== 'inactive';
+}
+
+function buildLeadRequestQuery(requestState) {
+    if (requestState === 'pending' || requestState === 'approved' || requestState === 'rejected') {
+        return { 'inactiveRequest.status': requestState };
+    }
+
+    if (requestState === 'none') {
+        return {
+            $or: [
+                { 'inactiveRequest.status': { $exists: false } },
+                { 'inactiveRequest.status': null },
+                { 'inactiveRequest.status': 'none' }
+            ]
+        };
+    }
+
+    return {};
+}
+
+function appendAndCondition(query, condition) {
+    if (!condition || Object.keys(condition).length === 0) {
+        return;
+    }
+
+    if (!query.$and) {
+        query.$and = [];
+    }
+
+    query.$and.push(condition);
+}
+
+function getLeadListRedirect(req) {
+    return req.get('referer') || '/leads';
+}
+
+function getLeadListFilters(req) {
+    return {
+        q: (req.query.q || '').trim(),
+        status: (req.query.status || '').trim(),
+        source: (req.query.source || '').trim(),
+        priority: (req.query.priority || '').trim(),
+        assignedUser: (req.query.assignedUser || '').trim(),
+        propertyType: (req.query.propertyType || '').trim(),
+        activity: normalizeLeadActivityFilter(req.query.activity),
+        requestState: normalizeLeadRequestFilter(req.query.requestState)
+    };
+}
+
+function applyLeadListFilters(baseQuery, filters) {
+    const query = {
+        ...baseQuery,
+        ...buildLeadActivityQuery(filters.activity)
+    };
+
+    if (filters.q) {
+        const regex = new RegExp(filters.q, 'i');
+        query.$or = [
+            { customerName: regex },
+            { phone: regex },
+            { preferredLocation: regex }
+        ];
+    }
+
+    if (filters.status) query.status = filters.status;
+    if (filters.source) query.source = filters.source;
+    if (filters.priority) query.priority = filters.priority;
+    if (filters.propertyType) query.propertyType = filters.propertyType;
+    if (filters.assignedUser && mongoose.Types.ObjectId.isValid(filters.assignedUser)) {
+        query.assignedUser = filters.assignedUser;
+    }
+
+    appendAndCondition(query, buildLeadRequestQuery(filters.requestState));
+
+    return query;
+}
+
+async function fetchLeadOverview(req) {
+    const scopeQuery = {
+        ...buildLeadScopeQuery(req),
+        ...buildLeadActivityQuery(normalizeLeadActivityFilter(req.query.activity))
+    };
+
+    return Lead.find(scopeQuery)
+        .populate('assignedUser', 'name email')
+        .sort({ updatedAt: -1 });
+}
+
+exports.getDashboard = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'viewLeads')) {
+            return;
+        }
+
+        const leads = await fetchLeadOverview(req);
+        res.render('index', { leads });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
+
 exports.getLeadsApi = async (req, res) => {
     try {
         if (!ensurePermission(req, res, 'viewLeads')) {
             return;
         }
 
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = {
+            ...buildLeadScopeQuery(req),
+            ...buildLeadActivityQuery(normalizeLeadActivityFilter(req.query.activity))
+        };
 
         const leads = await Lead.find(scopeQuery)
             .populate('assignedUser', 'name email')
@@ -218,34 +384,10 @@ exports.getLeads = async (req, res) => {
         // ২. প্রতি পেজে কয়টি করে লিড দেখাতে চান তা সেট করুন
         const limit = 10;
 
-        const filters = {
-            q: (req.query.q || '').trim(),
-            status: (req.query.status || '').trim(),
-            source: (req.query.source || '').trim(),
-            priority: (req.query.priority || '').trim(),
-            assignedUser: (req.query.assignedUser || '').trim(),
-            propertyType: (req.query.propertyType || '').trim()
-        };
+        const filters = getLeadListFilters(req);
 
         const scopeQuery = buildLeadScopeQuery(req);
-        const query = { ...scopeQuery };
-
-        if (filters.q) {
-            const regex = new RegExp(filters.q, 'i');
-            query.$or = [
-                { customerName: regex },
-                { phone: regex },
-                { preferredLocation: regex }
-            ];
-        }
-
-        if (filters.status) query.status = filters.status;
-        if (filters.source) query.source = filters.source;
-        if (filters.priority) query.priority = filters.priority;
-        if (filters.propertyType) query.propertyType = filters.propertyType;
-        if (filters.assignedUser && mongoose.Types.ObjectId.isValid(filters.assignedUser)) {
-            query.assignedUser = filters.assignedUser;
-        }
+        const query = applyLeadListFilters(scopeQuery, filters);
 
         // ৩. কতগুলো ডাটা স্কিপ করতে হবে তার হিসাব
         const skip = (page - 1) * limit;
@@ -263,7 +405,15 @@ exports.getLeads = async (req, res) => {
         const endOfToday = new Date();
         endOfToday.setHours(23, 59, 59, 999);
 
-        const [hotLeadsCount, newLeadsCount, todayFollowUpsCount] = await Promise.all([
+        const [activeLeadsCount, inactiveLeadsCount, hotLeadsCount, newLeadsCount, todayFollowUpsCount] = await Promise.all([
+            Lead.countDocuments({
+                ...scopeQuery,
+                ...buildLeadActivityQuery('active')
+            }),
+            Lead.countDocuments({
+                ...scopeQuery,
+                ...buildLeadActivityQuery('inactive')
+            }),
             Lead.countDocuments({ ...query, priority: 'Hot' }),
             Lead.countDocuments({ ...query, status: 'New' }),
             Lead.countDocuments({
@@ -283,6 +433,12 @@ exports.getLeads = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
+        const pendingInactiveRequestsCount = await Lead.countDocuments({
+            ...scopeQuery,
+            ...buildLeadActivityQuery('active'),
+            'inactiveRequest.status': 'pending'
+        });
+
         // ৫. মোট কতগুলো পেজ তৈরি হবে তার হিসাব
         const totalPages = Math.ceil(filteredTotal / limit);
 
@@ -293,6 +449,8 @@ exports.getLeads = async (req, res) => {
         if (filters.priority) queryParams.set('priority', filters.priority);
         if (filters.assignedUser) queryParams.set('assignedUser', filters.assignedUser);
         if (filters.propertyType) queryParams.set('propertyType', filters.propertyType);
+        if (filters.activity !== 'active') queryParams.set('activity', filters.activity);
+        if (filters.requestState) queryParams.set('requestState', filters.requestState);
 
         // 📤 ভিউ ফাইলে সব ভেরিয়েবল একসাথে পাস করুন
         res.render('leads', {
@@ -306,6 +464,9 @@ exports.getLeads = async (req, res) => {
             filters,
             preservedQuery: queryParams.toString(),
             stats: {
+                activeLeadsCount,
+                inactiveLeadsCount,
+                pendingInactiveRequestsCount,
                 hotLeadsCount,
                 newLeadsCount,
                 todayFollowUpsCount
@@ -313,6 +474,7 @@ exports.getLeads = async (req, res) => {
             canCreateLead: canAccess(getCurrentRole(req), 'createLead'),
             canUpdateLead: canAccess(getCurrentRole(req), 'updateLead'),
             canDeleteLead: canAccess(getCurrentRole(req), 'deleteLead'),
+            canRequestInactive: canAccess(getCurrentRole(req), 'updateLead') && !canAccess(getCurrentRole(req), 'deleteLead'),
             userRole: getCurrentRole(req),
             importSummary: {
                 imported: Number.parseInt(req.query.imported || '0', 10) || 0,
@@ -333,7 +495,9 @@ exports.exportLeadsCsv = async (req, res) => {
         }
 
         const scopeQuery = buildLeadScopeQuery(req);
-        const leads = await Lead.find(scopeQuery).sort({ createdAt: -1 }).lean();
+        const filters = getLeadListFilters(req);
+        const query = applyLeadListFilters(scopeQuery, filters);
+        const leads = await Lead.find(query).sort({ createdAt: -1 }).lean();
 
         const header = LEAD_CSV_COLUMNS.join(',');
         const rows = leads.map((lead) => LEAD_CSV_COLUMNS.map((column) => {
@@ -410,7 +574,7 @@ exports.importLeadsCsv = async (req, res) => {
 
             try {
                 const lead = new Lead({
-                    customerName: normalizeOptionalText(rowData.customerName),
+                    customerName: normalizeLeadCustomerName(rowData.customerName),
                     phone,
                     preferredLocation: rowData.preferredLocation || undefined,
                     propertyType: normalizedPropertyType || undefined,
@@ -459,11 +623,12 @@ exports.addLead = async (req, res) => {
             assignedUser,
             priority,
             status,
+            isActive,
             followUpDate,
             messageNote
         } = req.body;
 
-        const normalizedCustomerName = normalizeOptionalText(customerName);
+        const normalizedCustomerName = normalizeLeadCustomerName(customerName);
         const normalizedPhone = normalizePhoneNumber(phone);
         const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
         const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
@@ -488,6 +653,7 @@ exports.addLead = async (req, res) => {
             assignedUser: assignedUser || null,
             priority,
             status,
+            isActive: parseLeadActiveValue(isActive),
             followUpDate,
             messageNote
         });
@@ -501,6 +667,56 @@ exports.addLead = async (req, res) => {
             return sendLeadFormError(req, res, 400, duplicateLeadMessage(err, 'এই তথ্যটি আগে থেকেই ব্যবহৃত হয়েছে।'));
         }
         return sendLeadFormError(req, res, 500, err.message);
+    }
+};
+
+exports.requestLeadInactive = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'updateLead')) {
+            return;
+        }
+
+        if (canAccess(getCurrentRole(req), 'deleteLead')) {
+            return res.status(403).send('Admins can archive leads directly.');
+        }
+
+        const scopeQuery = buildLeadScopeQuery(req);
+        const lead = await Lead.findOne({
+            ...scopeQuery,
+            _id: req.params.id
+        }).select('isActive inactiveRequest');
+
+        if (!lead) {
+            return res.status(404).send('Lead not found.');
+        }
+
+        if (lead.isActive === false) {
+            return res.redirect(getLeadListRedirect(req));
+        }
+
+        if (lead.inactiveRequest && lead.inactiveRequest.status === 'pending') {
+            return res.redirect(getLeadListRedirect(req));
+        }
+
+        await Lead.findByIdAndUpdate(req.params.id, {
+            $set: {
+                inactiveRequest: {
+                    status: 'pending',
+                    note: normalizeOptionalText(req.body.requestNote),
+                    requestedBy: getCurrentUserId(req),
+                    requestedByName: getCurrentUserName(req),
+                    requestedAt: new Date(),
+                    reviewedBy: null,
+                    reviewedByName: undefined,
+                    reviewedAt: null,
+                    reviewNote: undefined
+                }
+            }
+        });
+
+        res.redirect(getLeadListRedirect(req));
+    } catch (err) {
+        res.status(500).send(err.message);
     }
 };
 
@@ -524,11 +740,12 @@ exports.updateLead = async (req, res) => {
             assignedUser,
             priority,
             status,
+            isActive,
             followUpDate,
             messageNote
         } = req.body;
 
-        const normalizedCustomerName = normalizeOptionalText(customerName);
+        const normalizedCustomerName = normalizeLeadCustomerName(customerName);
         const normalizedPhone = normalizePhoneNumber(phone);
         const normalizedPurpose = purpose ? String(purpose).trim() : undefined;
         const normalizedPropertyType = propertyType ? String(propertyType).trim() : undefined;
@@ -552,6 +769,7 @@ exports.updateLead = async (req, res) => {
             assignedUser: assignedUser || null,
             priority,
             status,
+            isActive: parseLeadActiveValue(isActive),
             followUpDate,
             messageNote
         });
@@ -566,14 +784,74 @@ exports.updateLead = async (req, res) => {
     }
 };
 
-// লিড ডিলিট করার ফাংশন
+// লিড আর্কাইভ/ডিঅ্যাক্টিভেট করার ফাংশন
 exports.deleteLead = async (req, res) => {
     try {
         if (!ensurePermission(req, res, 'deleteLead')) {
             return;
         }
-        await Lead.findByIdAndDelete(req.params.id);
-        res.redirect('/leads');
+
+        const lead = await Lead.findById(req.params.id).select('inactiveRequest');
+        const hasPendingRequest = lead && lead.inactiveRequest && lead.inactiveRequest.status === 'pending';
+
+        await Lead.findByIdAndUpdate(req.params.id, {
+            isActive: false,
+            ...(hasPendingRequest ? {
+                inactiveRequest: {
+                    ...lead.inactiveRequest.toObject(),
+                    status: 'approved',
+                    reviewedBy: getCurrentUserId(req),
+                    reviewedByName: getCurrentUserName(req),
+                    reviewedAt: new Date(),
+                    reviewNote: normalizeOptionalText(req.body.reviewNote) || lead.inactiveRequest.reviewNote
+                }
+            } : {})
+        });
+        res.redirect(getLeadListRedirect(req));
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
+
+exports.rejectLeadInactiveRequest = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'deleteLead')) {
+            return;
+        }
+
+        await Lead.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                'inactiveRequest.status': 'pending'
+            },
+            {
+                $set: {
+                    'inactiveRequest.status': 'rejected',
+                    'inactiveRequest.reviewedBy': getCurrentUserId(req),
+                    'inactiveRequest.reviewedByName': getCurrentUserName(req),
+                    'inactiveRequest.reviewedAt': new Date(),
+                    'inactiveRequest.reviewNote': normalizeOptionalText(req.body.reviewNote)
+                }
+            }
+        );
+
+        res.redirect(getLeadListRedirect(req));
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
+
+exports.restoreLead = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'deleteLead')) {
+            return;
+        }
+
+        await Lead.findByIdAndUpdate(req.params.id, {
+            isActive: true
+        });
+
+        res.redirect(getLeadListRedirect(req));
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -593,5 +871,12 @@ exports.addTimelineActivity = async (req, res) => {
 };
 
 exports.__testables = {
-    buildLeadScopeQuery
+    buildLeadScopeQuery,
+    normalizeLeadCustomerName,
+    normalizeLeadActivityFilter,
+    normalizeLeadRequestFilter,
+    buildLeadActivityQuery,
+    buildLeadRequestQuery,
+    parseLeadActiveValue,
+    applyLeadListFilters
 };

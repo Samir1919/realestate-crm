@@ -10,7 +10,7 @@
         </div>
 
         <!-- STATS ROW -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Total Leads Card -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
@@ -23,103 +23,6 @@
                     <i class="fa-solid fa-user-tag"></i>
                 </div>
             </div>
-
-            <!-- Pending Tasks Card -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Pending Tasks</p>
-                    <h3 class="text-3xl font-bold text-rose-600 mt-1">
-                        <%= tasks.filter(t=> t.status === 'Pending').length %>
-                    </h3>
-                </div>
-                <div class="p-3 bg-rose-50 text-rose-600 rounded-lg text-xl">
-                    <i class="fa-solid fa-list-check"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- TWO COLUMN GRID: TASK CREATION & LIVE REMINDERS -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-
-            <!-- Create New To-Do Task Form -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                <h3 class="text-lg font-bold mb-4 text-gray-800">
-                    <i class="fa-solid fa-circle-plus text-blue-600 mr-1"></i> Create New To-Do Task
-                </h3>
-                <form action="/tasks/create" method="POST" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
-                        <input type="text" name="title" required placeholder="e.g., Call client for apartment viewing"
-                            class="w-full p-2.5 border rounded-lg focus:outline-blue-500">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                            <input type="date" name="dueDate" required
-                                class="w-full p-2.5 border rounded-lg focus:outline-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                            <select name="priority" class="w-full p-2.5 border rounded-lg focus:outline-blue-500">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit"
-                        class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
-                        Save Task
-                    </button>
-                </form>
-            </div>
-            <!-- RIGHT: Live Urgent Reminders List (1 Column Width) -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                <div>
-                    <h4 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fa-solid fa-bell text-amber-500 mr-1"></i> Urgent Task Reminders
-                    </h4>
-
-                    <div class="space-y-3 max-h-[290px] overflow-y-auto pr-1">
-                        <% const pendingTasks=tasks.filter(t=> t.status === 'Pending') %>
-                            <% pendingTasks.forEach(task=> { %>
-                                <div
-                                    class="flex items-start justify-between p-3 bg-slate-50 rounded-lg border-l-4 <%= task.priority === 'High' ? 'border-rose-500' : 'border-amber-500' %> shadow-sm">
-                                    <div class="space-y-0.5">
-                                        <h5 class="font-bold text-sm text-gray-900">
-                                            <%= task.title %>
-                                        </h5>
-                                        <p class="text-xs text-gray-400">
-                                            <i class="fa-regular fa-clock"></i> Due: <%= new
-                                                Date(task.dueDate).toLocaleDateString() %>
-                                        </p>
-                                    </div>
-
-                                    <!-- Today Pulse Alert Indicator -->
-                                    <% if(new Date(task.dueDate).toDateString()===new Date().toDateString()) { %>
-                                        <span
-                                            class="inline-flex items-center bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
-                                            🚨 Today
-                                        </span>
-                                        <% } %>
-                                </div>
-                                <% }) %>
-
-                                    <% if (pendingTasks.length===0) { %>
-                                        <div class="text-center py-8 text-gray-400">
-                                            <i
-                                                class="fa-regular fa-circle-check text-2xl mb-1 text-green-400 block"></i>
-                                            No pending tasks!
-                                        </div>
-                                        <% } %>
-                    </div>
-                </div>
-
-                <div class="text-xs text-slate-400 text-right mt-2">
-                    Showing all active tasks
-                </div>
-            </div>
-
         </div>
 
 

@@ -86,6 +86,52 @@ const LeadSchema = new mongoose.Schema({
     ],
     default: 'New'
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+    index: true
+  },
+  inactiveRequest: {
+    status: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
+    note: {
+      type: String,
+      trim: true
+    },
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    requestedByName: {
+      type: String,
+      trim: true
+    },
+    requestedAt: {
+      type: Date,
+      default: null
+    },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    reviewedByName: {
+      type: String,
+      trim: true
+    },
+    reviewedAt: {
+      type: Date,
+      default: null
+    },
+    reviewNote: {
+      type: String,
+      trim: true
+    }
+  },
 
   // ফলো-আপ ও নোটস
   followUpDate: {

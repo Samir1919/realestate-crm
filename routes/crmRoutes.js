@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const leadController = require('../controllers/leadController');
-const taskController = require('../controllers/taskController');
 const { canAccess } = require('../utils/permissions');
 
 function attachRole(req, res, next) {
@@ -23,9 +22,8 @@ function requireRoutePermission(permissionKey) {
     };
 }
 
-// Dashboard & Kanban
-router.get('/', requireRoutePermission('viewLeads'), taskController.getKanbanAndTasks);
-router.get('/kanban', requireRoutePermission('viewLeads'), taskController.getKanbanAndTasks);
+// Dashboard
+router.get('/', leadController.getDashboard);
 
 // Leads API
 router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.getLeadsApi);
@@ -36,14 +34,12 @@ router.post('/leads', leadController.addLead);
 router.get('/leads/export.csv', leadController.exportLeadsCsv);
 router.post('/leads/import', leadController.importLeadsCsv);
 router.post('/leads/update/:id', leadController.updateLead);
+router.post('/leads/request-inactive/:id', leadController.requestLeadInactive);
 router.post('/leads/delete/:id', leadController.deleteLead);
+router.post('/leads/reject-inactive/:id', leadController.rejectLeadInactiveRequest);
+router.post('/leads/restore/:id', leadController.restoreLead);
 
-router.post('/leads/update-stage', requireRoutePermission('updateLead'), taskController.updateLeadStage);
 router.post('/leads/activity', requireRoutePermission('updateLead'), leadController.addTimelineActivity);
-
-// Tasks
-router.post('/tasks/create', requireRoutePermission('updateLead'), taskController.createTask);
-router.post('/tasks/:taskId/toggle', requireRoutePermission('updateLead'), taskController.toggleTaskStatus);
 
 
 

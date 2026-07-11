@@ -1,0 +1,31 @@
+<% const isInactive=lead.isActive===false; %>
+    <% const requestStatus=lead.inactiveRequest && lead.inactiveRequest.status ? lead.inactiveRequest.status : 'none' ;
+        %>
+        <% const hasPendingRequest=!isInactive && requestStatus==='pending' ; %>
+            <% const hasRejectedRequest=requestStatus==='rejected' ; %>
+                <span
+                    class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium whitespace-nowrap <%= isInactive ? 'bg-slate-200 text-slate-700 border-slate-300' : 'bg-emerald-100 text-emerald-700 border-emerald-200' %>">
+                    <%= isInactive ? 'Inactive' : 'Active' %>
+                </span>
+                <% if (hasPendingRequest) { %>
+                    <span
+                        class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium whitespace-nowrap bg-amber-100 text-amber-800 border-amber-200">
+                        Pending Request
+                    </span>
+                    <% } else if (hasRejectedRequest) { %>
+                        <span
+                            class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium whitespace-nowrap bg-rose-100 text-rose-800 border-rose-200">
+                            Rejected Request
+                        </span>
+                        <% } %>
+                            <span
+                                class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium capitalize whitespace-nowrap bg-amber-100 text-amber-700 border-amber-200">
+                                <%= lead.priority %>
+                            </span>
+                            <span class="text-xs text-slate-500">
+                                <%= lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned'
+                                    %>
+                            </span>
+                            <span class="text-xs text-slate-400 safe-truncate w-full" title="<%= lead.messageNote %>">
+                                <%= lead.messageNote || 'No notes added.' %>
+                            </span>
