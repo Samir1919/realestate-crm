@@ -3,7 +3,11 @@
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             CSV import complete: <strong>
                 <%= importSummary.imported %>
-            </strong> imported, <strong>
+            </strong> new,
+            <strong>
+                <%= importSummary.updated %>
+            </strong> updated,
+            <strong>
                 <%= importSummary.skipped %>
             </strong> skipped.
         </div>

@@ -519,3 +519,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`💻 CRM Server running on http://127.0.0.1:${PORT}`);
 });
+
+// Daily lead export (email)
+const { scheduleDailyExport } = require('./jobs/dailyLeadExport');
+scheduleDailyExport();

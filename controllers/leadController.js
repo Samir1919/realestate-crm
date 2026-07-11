@@ -5,6 +5,7 @@ const { canAccess } = require('../utils/permissions');
 const { PHONE_VALIDATION_MESSAGE, normalizePhoneNumber, isValidPhoneNumber } = require('../utils/phone');
 
 const LEAD_CSV_COLUMNS = [
+    'referenceNumber',
     'customerName',
     'phone',
     'preferredLocation',
@@ -18,9 +19,11 @@ const LEAD_CSV_COLUMNS = [
     'leadType',
     'priority',
     'status',
+    'isActive',
     'followUpDate',
     'assignedUserEmail',
-    'messageNote'
+    'messageNote',
+    'createdAt'
 ];
 
 function escapeCsvValue(value) {
@@ -558,6 +561,7 @@ exports.getLeads = async (req, res) => {
             userRole: getCurrentRole(req),
             importSummary: {
                 imported: Number.parseInt(req.query.imported || '0', 10) || 0,
+                updated: Number.parseInt(req.query.updated || '0', 10) || 0,
                 skipped: Number.parseInt(req.query.skipped || '0', 10) || 0,
                 hasResult: Object.prototype.hasOwnProperty.call(req.query, 'imported')
             }
@@ -584,13 +588,13 @@ exports.exportLeadsCsv = async (req, res) => {
 
         const header = LEAD_CSV_COLUMNS.join(',');
         const rows = leads.map((lead) => LEAD_CSV_COLUMNS.map((column) => {
-            if (column === 'followUpDate') {
-                if (!lead.followUpDate) {
+            if (column === 'followUpDate' || column === 'createdAt') {
+                if (!lead[column]) {
                     return '';
                 }
 
                 try {
-                    return escapeCsvValue(new Date(lead.followUpDate).toISOString().split('T')[0]);
+                    return escapeCsvValue(new Date(lead[column]).toISOString().split('T')[0]);
                 } catch (error) {
                     return '';
                 }
@@ -598,6 +602,10 @@ exports.exportLeadsCsv = async (req, res) => {
 
             if (column === 'assignedUserEmail') {
                 return escapeCsvValue(lead.assignedUser && lead.assignedUser.email ? lead.assignedUser.email : '');
+            }
+
+            if (column === 'isActive') {
+                return escapeCsvValue(lead.isActive !== false);
             }
 
             return escapeCsvValue(lead[column]);
@@ -632,6 +640,7 @@ exports.importLeadsCsv = async (req, res) => {
         const assignedUserEmailCache = new Map();
 
         let importedCount = 0;
+        let updatedCount = 0;
         let skippedCount = 0;
 
         for (const row of dataRows) {
@@ -679,9 +688,8 @@ exports.importLeadsCsv = async (req, res) => {
             }
 
             try {
-                const lead = new Lead({
+                const updateFields = {
                     customerName: normalizeLeadCustomerName(rowData.customerName),
-                    phone,
                     preferredLocation: rowData.preferredLocation || undefined,
                     propertyType: normalizedPropertyType || undefined,
                     budgetMin: rowData.budgetMin ? Number(rowData.budgetMin) : 0,
@@ -693,19 +701,29 @@ exports.importLeadsCsv = async (req, res) => {
                     leadType: normalizeLeadType(rowData.leadType, 'good'),
                     priority: rowData.priority || undefined,
                     status: rowData.status || undefined,
+                    isActive: rowData.isActive === 'false' ? false : true,
                     followUpDate: rowData.followUpDate || undefined,
                     assignedUser: resolvedAssignedUser,
                     messageNote: rowData.messageNote || undefined
-                });
+                };
 
-                await lead.save();
-                importedCount += 1;
+                const result = await Lead.findOneAndUpdate(
+                    { phone },
+                    { $set: updateFields },
+                    { upsert: true, new: false, lean: true }
+                );
+
+                if (result) {
+                    updatedCount += 1;
+                } else {
+                    importedCount += 1;
+                }
             } catch (error) {
                 skippedCount += 1;
             }
         }
 
-        res.redirect(`/leads?imported=${importedCount}&skipped=${skippedCount}`);
+        res.redirect(`/leads?imported=${importedCount}&updated=${updatedCount}&skipped=${skippedCount}`);
     } catch (err) {
         res.status(500).send(err.message);
     }

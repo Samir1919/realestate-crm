@@ -6,3 +6,9 @@
 // ADMIN_EMAIL=admin@crm.com
 // ADMIN_PASSWORD=123456
 // ADMIN_NAME=Admin User
+
+// ── Daily Lead Export (Email) ──────────────────────────────────────────────
+// EXPORT_EMAIL_USER=youremail@gmail.com        ← যেই Gmail থেকে পাঠাবে
+// EXPORT_EMAIL_PASS=xxxx xxxx xxxx xxxx        ← Gmail App Password (16 digit)
+// EXPORT_EMAIL_TO=boss@gmail.com               ← কোথায় পাঠাবে (না দিলে USER-এ যাবে)
+// EXPORT_CRON_TIME=0 23 * * *                  ← রাত ১১:০০ (Asia/Dhaka). Default: 0 23 * * *
