@@ -5,6 +5,45 @@ const nodemailer = require('nodemailer');
 const Lead = require('../models/Lead');
 require('../models/User'); // populate assignedUser এর জন্য
 
+function parseBoolean(value, defaultValue = false) {
+    if (value === undefined || value === null || value === '') return defaultValue;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
+function getMailConfig() {
+    const user = String(process.env.EXPORT_EMAIL_USER || '').trim();
+    // Gmail app password often gets copied with spaces; normalize for safer server deploys.
+    const pass = String(process.env.EXPORT_EMAIL_PASS || '').replace(/\s+/g, '');
+    const to = String(process.env.EXPORT_EMAIL_TO || user).trim();
+    const host = String(process.env.EXPORT_SMTP_HOST || '').trim();
+    const port = Number.parseInt(String(process.env.EXPORT_SMTP_PORT || ''), 10);
+    const secure = parseBoolean(process.env.EXPORT_SMTP_SECURE, false);
+    const requireTLS = parseBoolean(process.env.EXPORT_SMTP_REQUIRE_TLS, false);
+    const rejectUnauthorized = parseBoolean(process.env.EXPORT_SMTP_REJECT_UNAUTHORIZED, true);
+
+    if (!user || !pass) {
+        throw new Error('EXPORT_EMAIL_USER / EXPORT_EMAIL_PASS not configured');
+    }
+
+    const transport = host
+        ? {
+            host,
+            port: Number.isFinite(port) ? port : (secure ? 465 : 587),
+            secure,
+            requireTLS,
+            auth: { user, pass },
+            tls: {
+                rejectUnauthorized
+            }
+        }
+        : {
+            service: 'gmail',
+            auth: { user, pass }
+        };
+
+    return { user, to, transport };
+}
+
 // ─── CSV Builder ──────────────────────────────────────────────────────────────
 
 function escapeCSV(value) {
@@ -64,19 +103,15 @@ async function buildLeadsCSV() {
 // ─── Email Sender ─────────────────────────────────────────────────────────────
 
 async function sendExportEmail(csvData, dateLabel, displayLabel) {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EXPORT_EMAIL_USER,
-            pass: process.env.EXPORT_EMAIL_PASS   // Gmail App Password
-        }
-    });
+    const mailConfig = getMailConfig();
+    const transporter = nodemailer.createTransport(mailConfig.transport);
 
-    const recipients = process.env.EXPORT_EMAIL_TO || process.env.EXPORT_EMAIL_USER;
+    // SMTP credentials/host validation before attempting the actual send.
+    await transporter.verify();
 
     await transporter.sendMail({
-        from: `"CRM Auto Export" <${process.env.EXPORT_EMAIL_USER}>`,
-        to: recipients,
+        from: `"CRM Auto Export" <${mailConfig.user}>`,
+        to: mailConfig.to,
         subject: `📊 Lead Export — ${displayLabel}`,
         text: `Lead export (${displayLabel}) — সব lead-এর CSV file attached আছে।`,
         attachments: [
@@ -103,7 +138,14 @@ async function runExport() {
         await sendExportEmail(csv, dateLabel, displayLabel);
         console.log(`[Lead Export] ✅ Email sent successfully for ${dateLabel}`);
     } catch (err) {
+        const hint = err && err.code === 'EAUTH'
+            ? 'Authentication failed. Verify EXPORT_EMAIL_USER/EXPORT_EMAIL_PASS (App Password) on server.'
+            : '';
         console.error(`[Lead Export] ❌ Failed: ${err.message}`);
+        if (err && err.code) console.error(`[Lead Export] code=${err.code}`);
+        if (err && err.command) console.error(`[Lead Export] command=${err.command}`);
+        if (err && err.response) console.error(`[Lead Export] response=${err.response}`);
+        if (hint) console.error(`[Lead Export] hint=${hint}`);
     }
 }
 
@@ -115,8 +157,9 @@ async function runExport() {
 
 function scheduleDailyExport() {
     const cronTime = process.env.EXPORT_CRON_TIME || '0 23 * * *';
+    const normalizedPass = String(process.env.EXPORT_EMAIL_PASS || '').replace(/\s+/g, '');
 
-    if (!process.env.EXPORT_EMAIL_USER || !process.env.EXPORT_EMAIL_PASS) {
+    if (!process.env.EXPORT_EMAIL_USER || !normalizedPass) {
         console.warn('[Lead Export] ⚠️  EXPORT_EMAIL_USER / EXPORT_EMAIL_PASS not set — daily export disabled.');
         return;
     }
