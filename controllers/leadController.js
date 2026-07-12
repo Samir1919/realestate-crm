@@ -246,6 +246,24 @@ function normalizeLeadFollowUpFilter(value) {
         return 'today';
     }
 
+    if (normalized === 'all') {
+        return 'all';
+    }
+
+    return '';
+}
+
+function normalizeLeadFollowUpSort(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+
+    if (normalized === 'desc') {
+        return 'desc';
+    }
+
+    if (normalized === 'asc') {
+        return 'asc';
+    }
+
     return '';
 }
 
@@ -269,6 +287,15 @@ function buildLeadTypeQuery(leadType) {
 
 function buildLeadFollowUpQuery(followUp) {
     if (followUp !== 'today') {
+        if (followUp === 'all') {
+            return {
+                followUpDate: {
+                    $exists: true,
+                    $ne: null
+                }
+            };
+        }
+
         return {};
     }
 
@@ -283,6 +310,20 @@ function buildLeadFollowUpQuery(followUp) {
             $lte: endOfToday
         }
     };
+}
+
+function buildLeadListSort(filters) {
+    if (filters.followUp === 'today' || filters.followUp === 'all') {
+        const followUpSort = filters.followUpSort === 'desc' ? -1 : 1;
+
+        return {
+            followUpDate: followUpSort,
+            updatedAt: -1,
+            createdAt: -1
+        };
+    }
+
+    return { createdAt: -1 };
 }
 
 function buildLeadActivityQuery(activity) {
@@ -363,6 +404,7 @@ function getLeadListFilters(req) {
         status: (req.query.status || '').trim(),
         leadType: normalizeLeadType(req.query.leadType),
         followUp: normalizeLeadFollowUpFilter(req.query.followUp),
+        followUpSort: normalizeLeadFollowUpSort(req.query.followUpSort),
         source: (req.query.source || '').trim(),
         priority: (req.query.priority || '').trim(),
         assignedUser: (req.query.assignedUser || '').trim(),
@@ -507,7 +549,7 @@ exports.getLeads = async (req, res) => {
         const leads = await Lead.find()
             .find(query)
             .populate('assignedUser', 'name email')
-            .sort({ createdAt: -1 })
+            .sort(buildLeadListSort(filters))
             .skip(skip)
             .limit(limit);
 
@@ -525,6 +567,7 @@ exports.getLeads = async (req, res) => {
         if (filters.status) queryParams.set('status', filters.status);
         if (filters.leadType) queryParams.set('leadType', filters.leadType);
         if (filters.followUp) queryParams.set('followUp', filters.followUp);
+        if (filters.followUpSort) queryParams.set('followUpSort', filters.followUpSort);
         if (filters.source) queryParams.set('source', filters.source);
         if (filters.priority) queryParams.set('priority', filters.priority);
         if (filters.assignedUser) queryParams.set('assignedUser', filters.assignedUser);
@@ -600,7 +643,7 @@ exports.exportLeadsCsv = async (req, res) => {
         const filters = getLeadListFilters(req);
         const query = applyLeadListFilters(scopeQuery, filters);
         const leads = await Lead.find(query)
-            .sort({ createdAt: -1 })
+            .sort(buildLeadListSort(filters))
             .populate('assignedUser', 'email')
             .lean();
 
@@ -1076,9 +1119,11 @@ exports.__testables = {
     normalizeLeadRequestFilter,
     normalizeLeadType,
     normalizeLeadFollowUpFilter,
+    normalizeLeadFollowUpSort,
     buildLeadActivityQuery,
     buildLeadTypeQuery,
     buildLeadFollowUpQuery,
+    buildLeadListSort,
     buildLeadRequestQuery,
     withAdditionalCondition,
     parseLeadActiveValue,

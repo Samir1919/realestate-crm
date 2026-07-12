@@ -65,7 +65,14 @@ test('lead type filter normalizes supported types', () => {
 
 test('lead follow-up filter normalizes supported values', () => {
     assert.equal(__testables.normalizeLeadFollowUpFilter('today'), 'today');
+    assert.equal(__testables.normalizeLeadFollowUpFilter('all'), 'all');
     assert.equal(__testables.normalizeLeadFollowUpFilter('unknown'), '');
+});
+
+test('lead follow-up sort normalizes supported values', () => {
+    assert.equal(__testables.normalizeLeadFollowUpSort('asc'), 'asc');
+    assert.equal(__testables.normalizeLeadFollowUpSort('desc'), 'desc');
+    assert.equal(__testables.normalizeLeadFollowUpSort('unknown'), '');
 });
 
 test('lead type query builder keeps legacy rows inside good filter', () => {
@@ -85,6 +92,15 @@ test('lead follow-up query builder supports today filter', () => {
     assert.ok(query.followUpDate);
     assert.ok(query.followUpDate.$gte instanceof Date);
     assert.ok(query.followUpDate.$lte instanceof Date);
+});
+
+test('lead follow-up query builder supports all follow-ups', () => {
+    assert.deepEqual(__testables.buildLeadFollowUpQuery('all'), {
+        followUpDate: {
+            $exists: true,
+            $ne: null
+        }
+    });
 });
 
 test('lead request query builder supports pending and none states', () => {
@@ -177,4 +193,46 @@ test('lead list filters can include today follow-up condition', () => {
 
     assert.equal(query.$and.length, 1);
     assert.ok(query.$and[0].followUpDate);
+});
+
+test('lead list filters can include all follow-up condition', () => {
+    const query = __testables.applyLeadListFilters({}, {
+        q: '',
+        status: '',
+        leadType: '',
+        followUp: 'all',
+        source: '',
+        priority: '',
+        assignedUser: '',
+        propertyType: '',
+        activity: 'active',
+        requestState: ''
+    });
+
+    assert.equal(query.$and.length, 1);
+    assert.deepEqual(query.$and[0], {
+        followUpDate: {
+            $exists: true,
+            $ne: null
+        }
+    });
+});
+
+test('lead list sort switches to follow-up date for follow-up filters', () => {
+    assert.deepEqual(__testables.buildLeadListSort({ followUp: '' }), { createdAt: -1 });
+    assert.deepEqual(__testables.buildLeadListSort({ followUp: 'today' }), {
+        followUpDate: 1,
+        updatedAt: -1,
+        createdAt: -1
+    });
+    assert.deepEqual(__testables.buildLeadListSort({ followUp: 'all' }), {
+        followUpDate: 1,
+        updatedAt: -1,
+        createdAt: -1
+    });
+    assert.deepEqual(__testables.buildLeadListSort({ followUp: 'all', followUpSort: 'desc' }), {
+        followUpDate: -1,
+        updatedAt: -1,
+        createdAt: -1
+    });
 });
