@@ -1,5 +1,13 @@
-<form method="GET" action="/leads"
-    class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 !p-4">
+<div class="lg:hidden">
+    <button id="mobileFiltersToggleBtn" type="button"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+        aria-expanded="false" aria-controls="mobileFiltersPanel">
+        <span id="mobileFiltersToggleLabel">Show Filters</span>
+    </button>
+</div>
+
+<form id="mobileFiltersPanel" method="GET" action="/leads"
+    class="hidden w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 !p-4 lg:block">
     <div class="flex flex-col gap-3 min-w-0">
         <div class="relative min-w-0 w-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -12,7 +20,7 @@
                 class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10 min-w-0 w-full"
                 placeholder="Search name, phone, location..." value="<%= filters.q || '' %>"></div>
         <div
-            class="min-w-0 [&amp;_select]:min-w-0 [&amp;_select]:w-full [&amp;_input]:min-w-0 [&amp;_button]:min-w-0 [&amp;_a]:min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-10 gap-3">
+            class="min-w-0 [&amp;_select]:min-w-0 [&amp;_select]:w-full [&amp;_input]:min-w-0 [&amp;_button]:min-w-0 [&amp;_a]:min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             <select name="activity"
                 class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
                 <option value="active" <%=filters.activity==='active' ? 'selected' : '' %>>Active Leads</option>
@@ -48,11 +56,22 @@
                 <option value="">All Follow-ups</option>
                 <option value="today" <%=filters.followUp==='today' ? 'selected' : '' %>>Today Follow-ups</option>
                 <option value="all" <%=filters.followUp==='all' ? 'selected' : '' %>>All Follow-ups</option>
-            </select><select name="followUpSort"
+            </select><select name="sortBy"
                 class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
-                <option value="">Nearest First</option>
-                <option value="asc" <%=filters.followUpSort==='asc' ? 'selected' : '' %>>Nearest First</option>
-                <option value="desc" <%=filters.followUpSort==='desc' ? 'selected' : '' %>>Latest First</option>
+                <option value="">Sort By (Created Date)</option>
+                <option value="createdAt" <%=filters.sortBy==='createdAt' ? 'selected' : '' %>>Created Date</option>
+                <option value="updatedAt" <%=filters.sortBy==='updatedAt' ? 'selected' : '' %>>Updated Date</option>
+                <option value="followUpDate" <%=filters.sortBy==='followUpDate' ? 'selected' : '' %>>Follow-up Date
+                </option>
+                <option value="customerName" <%=filters.sortBy==='customerName' ? 'selected' : '' %>>Customer Name
+                </option>
+                <option value="status" <%=filters.sortBy==='status' ? 'selected' : '' %>>Status</option>
+                <option value="priority" <%=filters.sortBy==='priority' ? 'selected' : '' %>>Priority</option>
+            </select><select name="sortOrder"
+                class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
+                <option value="">Sort Order (Desc)</option>
+                <option value="asc" <%=filters.sortOrder==='asc' ? 'selected' : '' %>>Ascending</option>
+                <option value="desc" <%=filters.sortOrder==='desc' ? 'selected' : '' %>>Descending</option>
             </select><select name="requestState"
                 class="flex h-11 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 w-full">
                 <option value="">All Requests</option>
@@ -98,12 +117,13 @@
                 <option value="Upcoming Project" <%=filters.propertyType==='Upcoming Project' ? 'selected' : '' %>
                     >Upcoming Project</option>
             </select>
-            <div class="grid grid-cols-2 gap-3 sm:col-span-2 lg:col-span-3 xl:col-span-1">
+            <div
+                class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 mt-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 2xl:col-span-5 sm:justify-self-end sm:w-full">
                 <button type="submit"
-                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-11 px-5 py-2 min-w-0 w-full rounded-xl">Apply
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer bg-blue-600 text-white border border-blue-600 shadow-sm hover:bg-blue-700 h-10 px-4 py-2 min-w-0 w-full rounded-xl">Apply
                     Filter</button>
                 <a href="/leads"
-                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-11 px-5 py-2 min-w-0 w-full rounded-xl">Reset</a>
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-10 px-4 py-2 min-w-0 w-full rounded-xl">Reset</a>
             </div>
         </div>
     </div>

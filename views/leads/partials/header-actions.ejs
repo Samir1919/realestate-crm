@@ -60,6 +60,22 @@
                             </div>
                             <div
                                 class="flex flex-wrap items-center gap-2 sm:gap-3 w-full xl:w-auto xl:justify-end min-w-0">
+                                <div
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+                                    <label for="realtimePollInterval"
+                                        class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap">Realtime</label>
+                                    <select id="realtimePollInterval"
+                                        class="h-7 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="2000">2s (High load)</option>
+                                        <option value="5000">5s</option>
+                                        <option value="10000" selected>10s</option>
+                                        <option value="15000">15s</option>
+                                        <option value="30000">30s</option>
+                                    </select>
+                                    <span id="realtimePollWarning"
+                                        class="hidden text-[11px] font-semibold text-rose-600 whitespace-nowrap">2s এ
+                                        server load বেশি হতে পারে</span>
+                                </div>
                                 <%- include('request-live-badge') %>
                                     <a class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-semibold hover:bg-amber-100 transition-colors"
                                         href="/admin/follow-ups" data-discover="true"><svg

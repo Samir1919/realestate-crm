@@ -26,6 +26,15 @@ const LEAD_CSV_COLUMNS = [
     'createdAt'
 ];
 
+const LEAD_SORT_FIELD_MAP = Object.freeze({
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    followUpDate: 'followUpDate',
+    customerName: 'customerName',
+    status: 'status',
+    priority: 'priority'
+});
+
 function escapeCsvValue(value) {
     if (value === null || value === undefined) {
         return '';
@@ -253,18 +262,28 @@ function normalizeLeadFollowUpFilter(value) {
     return '';
 }
 
-function normalizeLeadFollowUpSort(value) {
+function normalizeLeadSortOrder(value) {
     const normalized = String(value || '').trim().toLowerCase();
 
-    if (normalized === 'desc') {
+    if (normalized === 'desc' || normalized === 'descending' || normalized === 'deccending') {
         return 'desc';
     }
 
-    if (normalized === 'asc') {
+    if (normalized === 'asc' || normalized === 'ascending' || normalized === 'acceding') {
         return 'asc';
     }
 
     return '';
+}
+
+function normalizeLeadSortField(value) {
+    const normalized = String(value || '').trim();
+
+    if (!normalized) {
+        return '';
+    }
+
+    return LEAD_SORT_FIELD_MAP[normalized] ? normalized : '';
 }
 
 function buildLeadTypeQuery(leadType) {
@@ -313,8 +332,28 @@ function buildLeadFollowUpQuery(followUp) {
 }
 
 function buildLeadListSort(filters) {
+    const sortBy = normalizeLeadSortField(filters.sortBy);
+    const sortOrder = normalizeLeadSortOrder(filters.sortOrder);
+
+    if (sortBy) {
+        const direction = sortOrder === 'asc' ? 1 : -1;
+        const sort = {
+            [sortBy]: direction
+        };
+
+        if (sortBy !== 'updatedAt') {
+            sort.updatedAt = -1;
+        }
+
+        if (sortBy !== 'createdAt') {
+            sort.createdAt = -1;
+        }
+
+        return sort;
+    }
+
     if (filters.followUp === 'today' || filters.followUp === 'all') {
-        const followUpSort = filters.followUpSort === 'desc' ? -1 : 1;
+        const followUpSort = sortOrder === 'desc' ? -1 : 1;
 
         return {
             followUpDate: followUpSort,
@@ -404,7 +443,8 @@ function getLeadListFilters(req) {
         status: (req.query.status || '').trim(),
         leadType: normalizeLeadType(req.query.leadType),
         followUp: normalizeLeadFollowUpFilter(req.query.followUp),
-        followUpSort: normalizeLeadFollowUpSort(req.query.followUpSort),
+        sortBy: normalizeLeadSortField(req.query.sortBy),
+        sortOrder: normalizeLeadSortOrder(req.query.sortOrder),
         source: (req.query.source || '').trim(),
         priority: (req.query.priority || '').trim(),
         assignedUser: (req.query.assignedUser || '').trim(),
@@ -442,6 +482,16 @@ function applyLeadListFilters(baseQuery, filters) {
     appendAndCondition(query, buildLeadFollowUpQuery(filters.followUp));
 
     return query;
+}
+
+function buildLeadsVersion(filteredTotal, latestLead) {
+    const countPart = Number.isFinite(filteredTotal) ? filteredTotal : 0;
+    const updatedAtPart = latestLead && latestLead.updatedAt
+        ? new Date(latestLead.updatedAt).getTime()
+        : 0;
+    const idPart = latestLead && latestLead._id ? String(latestLead._id) : 'none';
+
+    return `${countPart}:${updatedAtPart}:${idPart}`;
 }
 
 async function fetchLeadOverview(req) {
@@ -492,6 +542,36 @@ exports.getLeadsApi = async (req, res) => {
     }
 };
 
+exports.getLeadsVersion = async (req, res) => {
+    try {
+        if (!ensurePermission(req, res, 'viewLeads')) {
+            return;
+        }
+
+        const filters = getLeadListFilters(req);
+        const scopeQuery = buildLeadScopeQuery(req);
+        const query = applyLeadListFilters(scopeQuery, filters);
+
+        const [filteredTotal, latestLead] = await Promise.all([
+            Lead.countDocuments(query),
+            Lead.findOne(query)
+                .select('updatedAt _id')
+                .sort({ updatedAt: -1, _id: -1 })
+                .lean()
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            version: buildLeadsVersion(filteredTotal, latestLead)
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+
 // exports.getLeads = async (req, res) => {
 //     try {
 //         const leads = await Lead.find().sort({ createdAt: -1 });
@@ -507,22 +587,29 @@ exports.getLeads = async (req, res) => {
             return;
         }
         // ১. কুয়েরি থেকে কারেন্ট পেজ নাম্বার নিন (ডিফল্ট পেজ ১)
-        const page = parseInt(req.query.page) || 1;
+        const parsedPage = Number.parseInt(req.query.page || '1', 10);
+        const page = Number.isNaN(parsedPage) ? 1 : parsedPage;
 
         // ২. প্রতি পেজে কয়টি করে লিড দেখাতে চান তা সেট করুন
-        const limit = 10;
+        const pageSizeOptions = [10, 25, 50];
+        const parsedLimit = Number.parseInt(req.query.limit || '10', 10);
+        const limit = pageSizeOptions.includes(parsedLimit) ? parsedLimit : 10;
 
         const filters = getLeadListFilters(req);
 
         const scopeQuery = buildLeadScopeQuery(req);
         const query = applyLeadListFilters(scopeQuery, filters);
 
-        // ৩. কতগুলো ডাটা স্কিপ করতে হবে তার হিসাব
-        const skip = (page - 1) * limit;
-
         // ৪. ডাটাবেজে মোট কতগুলো লিড আছে তা কাউন্ট করুন
         const totalLeads = await Lead.countDocuments(scopeQuery);
         const filteredTotal = await Lead.countDocuments(query);
+
+        // ৫. মোট কতগুলো পেজ তৈরি হবে এবং কারেন্ট পেজকে বৈধ সীমায় রাখুন
+        const totalPages = Math.max(1, Math.ceil(filteredTotal / limit));
+        const currentPage = Math.min(Math.max(page, 1), totalPages);
+
+        // ৬. বৈধ কারেন্ট পেজ অনুযায়ী কতগুলো ডাটা স্কিপ করতে হবে
+        const skip = (currentPage - 1) * limit;
 
         const users = await User.find()
             .select('name email role')
@@ -559,26 +646,30 @@ exports.getLeads = async (req, res) => {
             'inactiveRequest.status': 'pending'
         });
 
-        // ৫. মোট কতগুলো পেজ তৈরি হবে তার হিসাব
-        const totalPages = Math.ceil(filteredTotal / limit);
-
         const queryParams = new URLSearchParams();
         if (filters.q) queryParams.set('q', filters.q);
         if (filters.status) queryParams.set('status', filters.status);
         if (filters.leadType) queryParams.set('leadType', filters.leadType);
         if (filters.followUp) queryParams.set('followUp', filters.followUp);
-        if (filters.followUpSort) queryParams.set('followUpSort', filters.followUpSort);
+        if (filters.sortBy) queryParams.set('sortBy', filters.sortBy);
+        if (filters.sortOrder) queryParams.set('sortOrder', filters.sortOrder);
         if (filters.source) queryParams.set('source', filters.source);
         if (filters.priority) queryParams.set('priority', filters.priority);
         if (filters.assignedUser) queryParams.set('assignedUser', filters.assignedUser);
         if (filters.propertyType) queryParams.set('propertyType', filters.propertyType);
         if (filters.activity !== 'active') queryParams.set('activity', filters.activity);
         if (filters.requestState) queryParams.set('requestState', filters.requestState);
+        if (limit !== 10) queryParams.set('limit', String(limit));
+
+        const latestLeadForVersion = await Lead.findOne(query)
+            .select('updatedAt _id')
+            .sort({ updatedAt: -1, _id: -1 })
+            .lean();
 
         // 📤 ভিউ ফাইলে সব ভেরিয়েবল একসাথে পাস করুন
         res.render('leads', {
             leads,
-            currentPage: page,
+            currentPage,
             totalPages,
             totalLeads,
             filteredTotal,
@@ -586,6 +677,8 @@ exports.getLeads = async (req, res) => {
             users,
             filters,
             preservedQuery: queryParams.toString(),
+            preservedQueryEntries: Array.from(queryParams.entries()),
+            pageSizeOptions,
             stats: {
                 activeLeadsCount,
                 inactiveLeadsCount,
@@ -602,6 +695,7 @@ exports.getLeads = async (req, res) => {
             canDeleteLead: canAccess(getCurrentRole(req), 'deleteLead'),
             canRequestInactive: canAccess(getCurrentRole(req), 'updateLead') && !canAccess(getCurrentRole(req), 'deleteLead'),
             userRole: getCurrentRole(req),
+            leadsVersion: buildLeadsVersion(filteredTotal, latestLeadForVersion),
             emailSent: req.query.emailSent || null,
             importSummary: {
                 imported: Number.parseInt(req.query.imported || '0', 10) || 0,
@@ -867,7 +961,7 @@ exports.requestLeadInactive = async (req, res) => {
         }
 
         if (canAccess(getCurrentRole(req), 'deleteLead')) {
-            return res.status(403).send('Admins can archive leads directly.');
+            return sendLeadFormError(req, res, 403, 'Admins can archive leads directly.');
         }
 
         const scopeQuery = buildLeadScopeQuery(req);
@@ -877,15 +971,15 @@ exports.requestLeadInactive = async (req, res) => {
         }).select('isActive inactiveRequest');
 
         if (!lead) {
-            return res.status(404).send('Lead not found.');
+            return sendLeadFormError(req, res, 404, 'Lead not found.');
         }
 
         if (lead.isActive === false) {
-            return res.redirect(getLeadListRedirect(req));
+            return sendLeadFormSuccess(req, res, 'লিড ইতোমধ্যেই inactive আছে।');
         }
 
         if (lead.inactiveRequest && lead.inactiveRequest.status === 'pending') {
-            return res.redirect(getLeadListRedirect(req));
+            return sendLeadFormSuccess(req, res, 'এই লিডের inactive request আগে থেকেই pending আছে।');
         }
 
         await Lead.findByIdAndUpdate(req.params.id, {
@@ -904,9 +998,9 @@ exports.requestLeadInactive = async (req, res) => {
             }
         });
 
-        res.redirect(getLeadListRedirect(req));
+        return sendLeadFormSuccess(req, res, 'Inactive approval request সফলভাবে পাঠানো হয়েছে।');
     } catch (err) {
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -1049,9 +1143,9 @@ exports.deleteLead = async (req, res) => {
                 }
             } : {})
         });
-        res.redirect(getLeadListRedirect(req));
+        return sendLeadFormSuccess(req, res, 'লিড inactive করা হয়েছে।');
     } catch (err) {
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -1061,7 +1155,7 @@ exports.rejectLeadInactiveRequest = async (req, res) => {
             return;
         }
 
-        await Lead.findOneAndUpdate(
+        const result = await Lead.findOneAndUpdate(
             {
                 _id: req.params.id,
                 'inactiveRequest.status': 'pending'
@@ -1077,9 +1171,13 @@ exports.rejectLeadInactiveRequest = async (req, res) => {
             }
         );
 
-        res.redirect(getLeadListRedirect(req));
+        if (!result) {
+            return sendLeadFormError(req, res, 404, 'Pending inactive request পাওয়া যায়নি।');
+        }
+
+        return sendLeadFormSuccess(req, res, 'Inactive request reject করা হয়েছে।');
     } catch (err) {
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -1093,9 +1191,9 @@ exports.restoreLead = async (req, res) => {
             isActive: true
         });
 
-        res.redirect(getLeadListRedirect(req));
+        return sendLeadFormSuccess(req, res, 'লিড আবার active করা হয়েছে।');
     } catch (err) {
-        res.status(500).send(err.message);
+        return sendLeadFormError(req, res, 500, err.message);
     }
 };
 
@@ -1119,7 +1217,8 @@ exports.__testables = {
     normalizeLeadRequestFilter,
     normalizeLeadType,
     normalizeLeadFollowUpFilter,
-    normalizeLeadFollowUpSort,
+    normalizeLeadSortField,
+    normalizeLeadSortOrder,
     buildLeadActivityQuery,
     buildLeadTypeQuery,
     buildLeadFollowUpQuery,

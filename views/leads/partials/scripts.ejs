@@ -4,6 +4,15 @@
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const leadModal = document.getElementById('leadModal');
     const leadModalPanel = document.getElementById('leadModalPanel');
+    const mobileStatsToggleBtn = document.getElementById('mobileStatsToggleBtn');
+    const mobileStatsToggleLabel = document.getElementById('mobileStatsToggleLabel');
+    const mobileStatsPanel = document.getElementById('mobileStatsPanel');
+    const mobileFiltersToggleBtn = document.getElementById('mobileFiltersToggleBtn');
+    const mobileFiltersToggleLabel = document.getElementById('mobileFiltersToggleLabel');
+    const mobileFiltersPanel = document.getElementById('mobileFiltersPanel');
+    const leadsVersionStateElement = document.getElementById('leadsVersionState');
+    const realtimePollIntervalSelect = document.getElementById('realtimePollInterval');
+    const realtimePollWarning = document.getElementById('realtimePollWarning');
     const leadDraftNotice = document.getElementById('leadDraftNotice');
     const clearDraftBtn = document.getElementById('clearDraftBtn');
 
@@ -11,7 +20,10 @@
     const importCsvInput = document.getElementById('importCsvInput');
     const addLeadForm = document.getElementById('addLeadForm');
     const editLeadForm = document.getElementById('editLeadForm');
-    const selectAllLeads = document.getElementById('selectAllLeads');
+    const deleteLeadForm = document.getElementById('deleteLeadForm');
+    const requestLeadInactiveForm = document.getElementById('requestLeadInactiveForm');
+    const restoreLeadForm = document.getElementById('restoreLeadForm');
+    const rejectLeadRequestForm = document.getElementById('rejectLeadRequestForm');
     const bulkAssignPanel = document.getElementById('bulkAssignPanel');
     const bulkAssignUser = document.getElementById('bulkAssignUser');
     const bulkAssignBtn = document.getElementById('bulkAssignBtn');
@@ -32,10 +44,155 @@
     const phoneValidationMessage = 'সঠিক ফোন নম্বর দিন। দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile।';
     const leadDraftStorageKey = 'lead-form-draft-v1';
     const bulkSelectionStorageKey = 'lead-bulk-selection-v1';
+    const realtimePollStorageKey = 'lead-realtime-poll-ms-v1';
+    const allowedRealtimePollIntervals = [2000, 5000, 10000, 15000, 30000];
     const selectedLeadIds = new Set();
 
     let bodyScrollLocks = 0;
     let leadModalCloseTimer = null;
+    let leadsRealtimePollMs = 10000;
+    let realtimePollTimer = null;
+    let currentLeadsVersion = leadsVersionStateElement ? String(leadsVersionStateElement.value || '') : '';
+
+    function getSavedRealtimePollMs() {
+        const raw = localStorage.getItem(realtimePollStorageKey);
+        const parsed = Number.parseInt(raw || '', 10);
+
+        if (allowedRealtimePollIntervals.includes(parsed)) {
+            return parsed;
+        }
+
+        return 10000;
+    }
+
+    function applyRealtimePollSelection(nextMs) {
+        const normalizedMs = allowedRealtimePollIntervals.includes(nextMs) ? nextMs : 10000;
+        leadsRealtimePollMs = normalizedMs;
+        localStorage.setItem(realtimePollStorageKey, String(normalizedMs));
+
+        if (realtimePollIntervalSelect) {
+            realtimePollIntervalSelect.value = String(normalizedMs);
+        }
+
+        if (realtimePollWarning) {
+            realtimePollWarning.classList.toggle('hidden', normalizedMs !== 2000);
+        }
+    }
+
+    function startRealtimePolling() {
+        if (realtimePollTimer) {
+            clearInterval(realtimePollTimer);
+        }
+
+        realtimePollTimer = setInterval(async () => {
+            if (document.hidden || hasOpenModal()) {
+                return;
+            }
+
+            const nextVersion = await fetchLatestLeadsVersion();
+            if (!nextVersion || nextVersion === currentLeadsVersion) {
+                return;
+            }
+
+            const refreshed = await softRefreshLeadSections();
+            if (!refreshed) {
+                currentLeadsVersion = nextVersion;
+                if (leadsVersionStateElement) {
+                    leadsVersionStateElement.value = nextVersion;
+                }
+            }
+        }, leadsRealtimePollMs);
+    }
+
+    function getLeadsVersionCheckUrl() {
+        const currentUrl = new URL(window.location.href);
+        const versionUrl = new URL('/api/leads/version', window.location.origin);
+
+        currentUrl.searchParams.forEach((value, key) => {
+            versionUrl.searchParams.append(key, value);
+        });
+
+        return versionUrl.toString();
+    }
+
+    async function fetchLatestLeadsVersion() {
+        try {
+            const response = await fetch(getLeadsVersionCheckUrl(), {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = await response.json();
+            if (!payload || payload.success !== true || !payload.version) {
+                return null;
+            }
+
+            return String(payload.version);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    applyRealtimePollSelection(getSavedRealtimePollMs());
+
+    if (realtimePollIntervalSelect) {
+        realtimePollIntervalSelect.addEventListener('change', () => {
+            const selectedMs = Number.parseInt(realtimePollIntervalSelect.value || '', 10);
+            applyRealtimePollSelection(selectedMs);
+            startRealtimePolling();
+        });
+    }
+
+    function updateMobileStatsToggleState() {
+        if (!mobileStatsToggleBtn || !mobileStatsPanel) {
+            return;
+        }
+
+        const isOpen = !mobileStatsPanel.classList.contains('hidden');
+        mobileStatsToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        if (mobileStatsToggleLabel) {
+            mobileStatsToggleLabel.textContent = isOpen ? 'Hide Stats' : 'Show Stats';
+        }
+    }
+
+    if (mobileStatsToggleBtn && mobileStatsPanel) {
+        updateMobileStatsToggleState();
+
+        mobileStatsToggleBtn.addEventListener('click', () => {
+            mobileStatsPanel.classList.toggle('hidden');
+            updateMobileStatsToggleState();
+        });
+    }
+
+    function updateMobileFiltersToggleState() {
+        if (!mobileFiltersToggleBtn || !mobileFiltersPanel) {
+            return;
+        }
+
+        const isOpen = !mobileFiltersPanel.classList.contains('hidden');
+        mobileFiltersToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        if (mobileFiltersToggleLabel) {
+            mobileFiltersToggleLabel.textContent = isOpen ? 'Hide Filters' : 'Show Filters';
+        }
+    }
+
+    if (mobileFiltersToggleBtn && mobileFiltersPanel) {
+        updateMobileFiltersToggleState();
+
+        mobileFiltersToggleBtn.addEventListener('click', () => {
+            mobileFiltersPanel.classList.toggle('hidden');
+            updateMobileFiltersToggleState();
+        });
+    }
 
     function lockBodyScroll() {
         bodyScrollLocks += 1;
@@ -352,6 +509,7 @@
     function updateBulkSelectionUI() {
         const selectedCount = selectedLeadIds.size;
         const visibleLeadIds = getVisibleLeadIds();
+        const selectAllLeads = document.getElementById('selectAllLeads');
         let selectedOnPage = 0;
 
         visibleLeadIds.forEach((leadId) => {
@@ -395,12 +553,18 @@
 
     function bindLeadSelectionEvents() {
         const checkboxes = getLeadSelectionCheckboxes();
+        const selectAllLeads = document.getElementById('selectAllLeads');
 
         checkboxes.forEach((checkbox) => {
             const leadId = checkbox.dataset.leadId;
             if (selectedLeadIds.has(leadId)) {
                 checkbox.checked = true;
             }
+
+            if (checkbox.dataset.bulkBound === '1') {
+                return;
+            }
+            checkbox.dataset.bulkBound = '1';
 
             checkbox.addEventListener('change', () => {
                 const id = checkbox.dataset.leadId;
@@ -420,52 +584,161 @@
         });
 
         if (selectAllLeads) {
-            selectAllLeads.addEventListener('change', () => {
-                const shouldSelect = selectAllLeads.checked;
+            if (selectAllLeads.dataset.bulkBound !== '1') {
+                selectAllLeads.dataset.bulkBound = '1';
+                selectAllLeads.addEventListener('change', () => {
+                    const shouldSelect = selectAllLeads.checked;
+                    const liveCheckboxes = getLeadSelectionCheckboxes();
 
-                checkboxes.forEach((checkbox) => {
-                    const id = checkbox.dataset.leadId;
-                    if (!id) {
-                        return;
-                    }
+                    liveCheckboxes.forEach((checkbox) => {
+                        const id = checkbox.dataset.leadId;
+                        if (!id) {
+                            return;
+                        }
 
-                    if (shouldSelect) {
-                        selectedLeadIds.add(id);
-                    } else {
-                        selectedLeadIds.delete(id);
-                    }
+                        if (shouldSelect) {
+                            selectedLeadIds.add(id);
+                        } else {
+                            selectedLeadIds.delete(id);
+                        }
 
-                    syncLeadCheckboxState(id, shouldSelect);
+                        syncLeadCheckboxState(id, shouldSelect);
+                    });
+
+                    updateBulkSelectionUI();
                 });
-
-                updateBulkSelectionUI();
-            });
+            }
         }
 
         if (bulkClearSelectionBtn) {
-            bulkClearSelectionBtn.addEventListener('click', () => {
-                selectedLeadIds.clear();
-                checkboxes.forEach((checkbox) => {
-                    checkbox.checked = false;
-                });
+            if (bulkClearSelectionBtn.dataset.bulkBound === '1') {
                 updateBulkSelectionUI();
-            });
+            } else {
+                bulkClearSelectionBtn.dataset.bulkBound = '1';
+                bulkClearSelectionBtn.addEventListener('click', () => {
+                    selectedLeadIds.clear();
+                    getLeadSelectionCheckboxes().forEach((checkbox) => {
+                        checkbox.checked = false;
+                    });
+                    updateBulkSelectionUI();
+                });
+            }
         }
 
         if (bulkClearPageSelectionBtn) {
-            bulkClearPageSelectionBtn.addEventListener('click', () => {
-                const visibleLeadIds = getVisibleLeadIds();
-
-                visibleLeadIds.forEach((leadId) => {
-                    selectedLeadIds.delete(leadId);
-                    syncLeadCheckboxState(leadId, false);
-                });
-
+            if (bulkClearPageSelectionBtn.dataset.bulkBound === '1') {
                 updateBulkSelectionUI();
-            });
+            } else {
+                bulkClearPageSelectionBtn.dataset.bulkBound = '1';
+                bulkClearPageSelectionBtn.addEventListener('click', () => {
+                    const visibleLeadIds = getVisibleLeadIds();
+
+                    visibleLeadIds.forEach((leadId) => {
+                        selectedLeadIds.delete(leadId);
+                        syncLeadCheckboxState(leadId, false);
+                    });
+
+                    updateBulkSelectionUI();
+                });
+            }
         }
 
         updateBulkSelectionUI();
+    }
+
+    function hasOpenModal() {
+        const modalIds = [
+            'leadModal',
+            'editLeadModal',
+            'deleteLeadModal',
+            'requestLeadInactiveModal',
+            'restoreLeadModal',
+            'rejectLeadRequestModal',
+            'bulkAssignConfirmModal',
+            'viewLeadModal'
+        ];
+
+        return modalIds.some((modalId) => {
+            const modal = document.getElementById(modalId);
+            return modal && !modal.classList.contains('hidden') && modal.style.display !== 'none';
+        });
+    }
+
+    async function softRefreshLeadSections() {
+        if (hasOpenModal()) {
+            return false;
+        }
+
+        const currentScrollY = window.scrollY;
+        const mainScrollContainer = document.querySelector('div.flex-1.flex.flex-col.overflow-y-auto');
+        const mainScrollTop = mainScrollContainer ? mainScrollContainer.scrollTop : 0;
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                return false;
+            }
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const nextDocument = parser.parseFromString(html, 'text/html');
+            const nextVersionState = nextDocument.getElementById('leadsVersionState');
+            if (nextVersionState) {
+                currentLeadsVersion = String(nextVersionState.value || '');
+                if (leadsVersionStateElement) {
+                    leadsVersionStateElement.value = currentLeadsVersion;
+                }
+            }
+            const sectionIds = [
+                'leads-stats-section',
+                'leads-table-section',
+                'mobile-lead-cards',
+                'leads-pagination-section'
+            ];
+
+            let replacedAnySection = false;
+
+            sectionIds.forEach((sectionId) => {
+                const currentSection = document.getElementById(sectionId);
+                const nextSection = nextDocument.getElementById(sectionId);
+
+                if (!currentSection || !nextSection) {
+                    return;
+                }
+
+                if (currentSection.innerHTML !== nextSection.innerHTML) {
+                    currentSection.innerHTML = nextSection.innerHTML;
+                    replacedAnySection = true;
+                }
+            });
+
+            if (!replacedAnySection) {
+                return false;
+            }
+
+            selectedLeadIds.forEach((leadId) => {
+                const checkbox = document.querySelector(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+                if (!checkbox) {
+                    selectedLeadIds.delete(leadId);
+                }
+            });
+
+            bindLeadSelectionEvents();
+            updateBulkSelectionUI();
+            window.scrollTo({ top: currentScrollY, behavior: 'auto' });
+            if (mainScrollContainer) {
+                mainScrollContainer.scrollTop = mainScrollTop;
+            }
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     function getSelectedAssigneeName() {
@@ -575,9 +848,7 @@
             selectedLeadIds.clear();
             sessionStorage.removeItem(bulkSelectionStorageKey);
             showPopupMessage(message, 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 450);
+            await softRefreshLeadSections();
         } catch (error) {
             showPopupMessage('Server connection failed. Please try again.', 'error');
         } finally {
@@ -739,12 +1010,12 @@
                     clearLeadFormDraft();
                     closeModal();
 
-                    let shouldReload = true;
-                    const reloadTimer = setTimeout(() => {
-                        if (shouldReload) {
-                            window.location.reload();
+                    let shouldRefresh = true;
+                    const refreshTimer = setTimeout(async () => {
+                        if (shouldRefresh) {
+                            await softRefreshLeadSections();
                         }
-                    }, 2000);
+                    }, 1200);
 
                     showPopupMessage(successMessage, 'success', {
                         duration: 5000,
@@ -752,17 +1023,17 @@
                             {
                                 label: 'Add another',
                                 onClick: () => {
-                                    shouldReload = false;
-                                    clearTimeout(reloadTimer);
+                                    shouldRefresh = false;
+                                    clearTimeout(refreshTimer);
                                     openModal();
                                 }
                             },
                             {
                                 label: 'Refresh list',
-                                onClick: () => {
-                                    shouldReload = false;
-                                    clearTimeout(reloadTimer);
-                                    window.location.reload();
+                                onClick: async () => {
+                                    shouldRefresh = false;
+                                    clearTimeout(refreshTimer);
+                                    await softRefreshLeadSections();
                                 }
                             }
                         ]
@@ -789,15 +1060,36 @@
             }
 
             await submitLeadFormAjax(editLeadForm, {
-                onSuccess: () => {
+                onSuccess: async () => {
                     closeEditModal();
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 450);
+                    await softRefreshLeadSections();
                 }
             });
         });
     }
+
+    function bindModalActionForm(form, closeModalFn) {
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await submitLeadFormAjax(form, {
+                onSuccess: async () => {
+                    if (typeof closeModalFn === 'function') {
+                        closeModalFn();
+                    }
+                    await softRefreshLeadSections();
+                }
+            });
+        });
+    }
+
+    bindModalActionForm(deleteLeadForm, closeDeleteModal);
+    bindModalActionForm(requestLeadInactiveForm, closeRequestInactiveModal);
+    bindModalActionForm(restoreLeadForm, closeRestoreModal);
+    bindModalActionForm(rejectLeadRequestForm, closeRejectLeadRequestModal);
 
     if (importLeadsBtn && importCsvInput) {
         importLeadsBtn.addEventListener('click', () => {
@@ -1294,5 +1586,7 @@
             closeViewModal();
         }
     };
+
+    startRealtimePolling();
 
 </script>

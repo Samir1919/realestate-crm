@@ -27,6 +27,7 @@ router.get('/', leadController.getDashboard);
 
 // Leads API
 router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.getLeadsApi);
+router.get('/api/leads/version', requireRoutePermission('viewLeads'), leadController.getLeadsVersion);
 
 // Leads & Timeline
 router.get('/leads', leadController.getLeads);

@@ -1,4 +1,13 @@
-<section class="grid gap-4 min-w-0 w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+<div class="lg:hidden">
+    <button id="mobileStatsToggleBtn" type="button"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+        aria-expanded="false" aria-controls="mobileStatsPanel">
+        <span id="mobileStatsToggleLabel">Show Stats</span>
+    </button>
+</div>
+
+<section id="mobileStatsPanel"
+    class="hidden min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 lg:grid">
     <a href="/leads?activity=all"
         class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-blue-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
@@ -193,7 +202,7 @@
             </div>
         </div>
     </a>
-    <a href="/leads?followUp=today"
+    <a href="/leads?followUp=today&activity=all"
         class="block w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 hover:shadow-md hover:border-amber-300 transition-shadow transition-colors">
         <div class="flex items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 flex-1">

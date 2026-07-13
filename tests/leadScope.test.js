@@ -69,10 +69,21 @@ test('lead follow-up filter normalizes supported values', () => {
     assert.equal(__testables.normalizeLeadFollowUpFilter('unknown'), '');
 });
 
-test('lead follow-up sort normalizes supported values', () => {
-    assert.equal(__testables.normalizeLeadFollowUpSort('asc'), 'asc');
-    assert.equal(__testables.normalizeLeadFollowUpSort('desc'), 'desc');
-    assert.equal(__testables.normalizeLeadFollowUpSort('unknown'), '');
+test('lead sort field normalizes and allowlists supported fields', () => {
+    assert.equal(__testables.normalizeLeadSortField('createdAt'), 'createdAt');
+    assert.equal(__testables.normalizeLeadSortField('followUpDate'), 'followUpDate');
+    assert.equal(__testables.normalizeLeadSortField('customerName'), 'customerName');
+    assert.equal(__testables.normalizeLeadSortField('unknownField'), '');
+});
+
+test('lead sort order normalizes supported values', () => {
+    assert.equal(__testables.normalizeLeadSortOrder('asc'), 'asc');
+    assert.equal(__testables.normalizeLeadSortOrder('desc'), 'desc');
+    assert.equal(__testables.normalizeLeadSortOrder('ascending'), 'asc');
+    assert.equal(__testables.normalizeLeadSortOrder('descending'), 'desc');
+    assert.equal(__testables.normalizeLeadSortOrder('acceding'), 'asc');
+    assert.equal(__testables.normalizeLeadSortOrder('deccending'), 'desc');
+    assert.equal(__testables.normalizeLeadSortOrder('unknown'), '');
 });
 
 test('lead type query builder keeps legacy rows inside good filter', () => {
@@ -230,8 +241,20 @@ test('lead list sort switches to follow-up date for follow-up filters', () => {
         updatedAt: -1,
         createdAt: -1
     });
-    assert.deepEqual(__testables.buildLeadListSort({ followUp: 'all', followUpSort: 'desc' }), {
+    assert.deepEqual(__testables.buildLeadListSort({ followUp: 'all', sortOrder: 'desc' }), {
         followUpDate: -1,
+        updatedAt: -1,
+        createdAt: -1
+    });
+});
+
+test('lead list sort supports explicit sortBy and sortOrder', () => {
+    assert.deepEqual(__testables.buildLeadListSort({ sortBy: 'customerName', sortOrder: 'asc' }), {
+        customerName: 1,
+        updatedAt: -1,
+        createdAt: -1
+    });
+    assert.deepEqual(__testables.buildLeadListSort({ sortBy: 'updatedAt', sortOrder: 'desc' }), {
         updatedAt: -1,
         createdAt: -1
     });
