@@ -1,27 +1,27 @@
 <%- include('partials/header') %>
     <%- include('partials/sidebar') %>
 
-        <div class="mb-6 flex items-center justify-between gap-3">
-            <h2 class="text-2xl font-bold">CRM Analytics Overview</h2>
-            <a href="/logout"
-                class="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:bg-rose-100">
-                Logout
-            </a>
-        </div>
+        <div class="w-full min-w-0 overflow-x-hidden">
+            <div class="safe-container mx-auto w-full max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <%- include('partials/ui/page-header', { title: 'CRM Analytics Overview' ,
+                    subtitle: 'Quick snapshot of your current pipeline.' , action: { type: 'link' , href: '/logout' ,
+                    label: 'Logout' ,
+                    className: 'crm-btn-danger inline-flex items-center rounded-xl px-3 py-2 text-sm font-semibold shadow-sm'
+                    } }) %>
 
-        <!-- STATS ROW -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Leads Card -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Leads</p>
-                    <h3 class="text-3xl font-bold mt-1 text-gray-900">
-                        <%= leads.length %>
-                    </h3>
-                </div>
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg text-xl">
-                    <i class="fa-solid fa-user-tag"></i>
-                </div>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                        <div class="crm-card-soft flex items-center justify-between p-6">
+                            <div>
+                                <p class="text-sm font-semibold uppercase tracking-wider text-slate-500">Total Leads</p>
+                                <h3 class="mt-1 text-4xl font-bold text-slate-900">
+                                    <%= leads.length %>
+                                </h3>
+                            </div>
+                            <div class="rounded-xl bg-blue-50 p-3 text-xl text-blue-600">
+                                <i class="fa-solid fa-user-tag"></i>
+                            </div>
+                        </div>
+                    </div>
             </div>
         </div>
 

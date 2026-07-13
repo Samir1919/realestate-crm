@@ -1,0 +1,31 @@
+<% const headerTitle=typeof title !=='undefined' ? title : '' ; const headerSubtitle=typeof subtitle !=='undefined' ?
+    subtitle : '' ; const headerAction=typeof action !=='undefined' ? action : null; %>
+    <header class="min-w-0 w-full">
+        <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0 flex-1">
+                <h1 class="page-title safe-truncate text-2xl font-bold text-slate-900 md:text-3xl">
+                    <%= headerTitle %>
+                </h1>
+                <% if (headerSubtitle) { %>
+                    <p class="page-subtitle mt-1 safe-truncate text-sm sm:text-base">
+                        <%= headerSubtitle %>
+                    </p>
+                    <% } %>
+            </div>
+
+            <% if (headerAction) { %>
+                <div class="flex items-center gap-2">
+                    <% if (headerAction.type==='link' ) { %>
+                        <a href="<%= headerAction.href %>" class="<%= headerAction.className %>">
+                            <%= headerAction.label %>
+                        </a>
+                        <% } else { %>
+                            <button type="<%= headerAction.buttonType || 'button' %>" <% if (headerAction.id) { %> id="
+                                <%= headerAction.id %>"<% } %> class="<%= headerAction.className %>">
+                                            <%= headerAction.label %>
+                            </button>
+                            <% } %>
+                </div>
+                <% } %>
+        </div>
+    </header>

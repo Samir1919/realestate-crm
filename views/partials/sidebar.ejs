@@ -19,35 +19,42 @@
         <!-- মেনু লিঙ্কসমূহ -->
         <nav class="mt-8 space-y-1.5">
             <% if (permissions && permissions.viewLeads) { %>
-                <a href="/"
-                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                <a href="/" data-nav-link="/"
+                    class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
                     title="Dashboard">
                     <i
-                        class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0 text-gray-400 group-hover:text-blue-600"></i>
-                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Dashboard</span>
+                        class="fa-solid fa-chart-pie sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400 group-hover:text-blue-600"></i>
+                    <span
+                        class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Dashboard</span>
                 </a>
-                <a href="/leads"
-                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                <a href="/leads" data-nav-link="/leads"
+                    class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
                     title="Leads & Customers">
-                    <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
-                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Leads & Customers</span>
+                    <i
+                        class="fa-solid fa-users sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                    <span class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Leads &
+                        Customers</span>
                 </a>
                 <% } %>
                     <% if (permissions && permissions.manageUsers) { %>
-                        <a href="/admin/users"
-                            class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                        <a href="/admin/users" data-nav-link="/admin/users"
+                            class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
                             title="User Management">
-                            <i class="fa-solid fa-user-shield w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
-                            <span class="sidebar-label transition-opacity duration-200 opacity-100">User
+                            <i
+                                class="fa-solid fa-user-shield sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                            <span class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">User
                                 Management</span>
                         </a>
                         <% } %>
                             <% if (permissions && permissions.manageRoles) { %>
-                                <a href="/admin/roles"
-                                    class="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-blue-600 font-medium transition whitespace-nowrap"
+                                <a href="/admin/roles" data-nav-link="/admin/roles"
+                                    class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
                                     title="Roles & Permissions">
-                                    <i class="fa-solid fa-key w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
-                                    <span class="sidebar-label transition-opacity duration-200 opacity-100">Roles &
+                                    <i
+                                        class="fa-solid fa-key sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                                    <span
+                                        class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Roles
+                                        &
                                         Permissions</span>
                                 </a>
                                 <% } %>
@@ -61,6 +68,8 @@
     </div>
 </div>
 
+<div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-slate-900/35 md:hidden"></div>
+
 <!-- মোবাইল স্ক্রিনের জন্য ওপেন বাটন (ম্যাচিং ডার্ক বাটন যাতে সাদার ওপর সুন্দর ফুটে ওঠে) -->
 <button id="open-sidebar"
     class="hidden fixed top-4 left-4 z-40 bg-slate-900 text-white p-2.5 rounded-md shadow-md focus:outline-none">
@@ -68,4 +77,4 @@
 </button>
 
 <!-- Main Content Area Wrapper -->
-<div class="flex-1 flex flex-col overflow-y-auto p-8 pt-20 md:pt-8">
+<div class="app-main-content flex-1 flex flex-col overflow-y-auto">

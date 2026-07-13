@@ -5,16 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Real Estate CRM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
+<body class="min-h-screen text-slate-900 antialiased">
     <div class="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
         <div
             class="grid w-full gap-8 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl lg:grid-cols-2">
             <div
-                class="hidden bg-gradient-to-br from-emerald-600 to-teal-500 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+                class="auth-shell hidden bg-gradient-to-br from-blue-700 to-sky-500 p-10 text-white lg:flex lg:flex-col lg:justify-between">
                 <div>
                     <h1 class="text-3xl font-bold">Create Account</h1>
                     <p class="mt-4 text-sm text-emerald-100">New registrations are created with Viewer role by default.
@@ -49,11 +53,11 @@
                             <p class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">Default
                                 role: Viewer</p>
                             <button type="submit"
-                                class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">Create
+                                class="crm-btn-primary w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white">Create
                                 Account</button>
                         </form>
                         <p class="mt-5 text-sm text-gray-600">Already have an account? <a href="/login"
-                                class="font-semibold text-emerald-600 hover:text-emerald-700">Back to login</a></p>
+                                class="font-semibold text-blue-600 hover:text-blue-700">Back to login</a></p>
             </div>
         </div>
     </div>

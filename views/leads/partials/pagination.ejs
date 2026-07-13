@@ -1,5 +1,5 @@
 <div class="mt-6 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p class="text-sm font-medium text-slate-600">
             Showing
             <%= filteredTotal===0 ? 0 : (currentPage - 1) * limit + 1 %>–<%= Math.min(currentPage * limit,
@@ -39,8 +39,9 @@
                 }
                 %>
 
-                <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                    <label class="text-sm text-slate-500 hidden sm:inline" for="leads-page-size">Rows</label>
+                <div id="leads-pagination-controls"
+                    class="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap md:gap-1.5 md:justify-end lg:w-auto lg:justify-end">
+                    <label class="text-sm text-slate-500 hidden lg:inline" for="leads-page-size">Rows</label>
                     <select id="leads-page-size"
                         class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         onchange="window.location.href=this.value">
@@ -51,13 +52,13 @@
                             <% }) %>
                     </select>
 
-                    <span class="text-sm whitespace-nowrap text-slate-600 hidden sm:inline">Page <%= currentPage %> of
+                    <span class="text-sm whitespace-nowrap text-slate-600 hidden lg:inline">Page <%= currentPage %> of
                             <%= totalPages %>
                     </span>
 
                     <% if (currentPage> 1) { %>
                         <a href="<%= pageHref(1) %>"
-                            class="hidden sm:inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-10 rounded-xl px-3 text-sm">
+                            class="hidden xl:inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-10 rounded-xl px-3 text-sm">
                             First
                         </a>
                         <a href="<%= pageHref(currentPage - 1) %>"
@@ -71,7 +72,7 @@
                         </a>
                         <% } else { %>
                             <span
-                                class="inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-10 rounded-xl px-3 text-sm opacity-50 cursor-not-allowed hidden sm:inline">
+                                class="inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-10 rounded-xl px-3 text-sm opacity-50 cursor-not-allowed hidden xl:inline">
                                 First
                             </span>
                             <span
@@ -87,11 +88,11 @@
                             <% } %>
 
                                 <span
-                                    class="inline-flex sm:hidden items-center justify-center whitespace-nowrap font-semibold text-slate-600 h-10 rounded-xl px-3 text-sm bg-slate-50 border border-slate-200">
+                                    class="inline-flex items-center justify-center whitespace-nowrap font-semibold text-slate-600 h-10 rounded-xl px-3 text-sm bg-slate-50 border border-slate-200 lg:hidden">
                                     <%= currentPage %>/<%= totalPages %>
                                 </span>
 
-                                <div class="items-center gap-1 hidden md:flex">
+                                <div class="items-center gap-1 hidden xl:flex">
                                     <% pages.forEach((pageItem)=> { %>
                                         <% if (typeof pageItem==='number' ) { %>
                                             <% if (pageItem===currentPage) { %>
@@ -138,7 +139,7 @@
                                         </svg>
                                     </a>
                                     <a href="<%= pageHref(totalPages) %>"
-                                        class="hidden sm:inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-10 rounded-xl px-3 text-sm">
+                                        class="hidden xl:inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 h-10 rounded-xl px-3 text-sm">
                                         Last
                                     </a>
                                     <% } else { %>
@@ -153,7 +154,7 @@
                                             </svg>
                                         </span>
                                         <span
-                                            class="inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-10 rounded-xl px-3 text-sm opacity-50 cursor-not-allowed hidden sm:inline">
+                                            class="inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 bg-white text-slate-700 border border-slate-200 shadow-sm h-10 rounded-xl px-3 text-sm opacity-50 cursor-not-allowed hidden xl:inline">
                                             Last
                                         </span>
                                         <% } %>

@@ -26,10 +26,12 @@
                                 class="inline-flex px-2 py-0.5 rounded-full text-xs border font-medium uppercase whitespace-nowrap <%= lead.leadType === 'spam' ? 'bg-rose-100 text-rose-700 border-rose-200' : lead.leadType === 'bad' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-cyan-100 text-cyan-700 border-cyan-200' %>">
                                 <%= lead.leadType || 'good' %>
                             </span>
-                            <span class="text-xs text-slate-500">
+                            <span class="min-w-0 max-w-full truncate text-xs text-slate-500 md:max-w-[8.5rem]"
+                                title="<%= lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned' %>">
                                 <%= lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned'
                                     %>
                             </span>
-                            <span class="text-xs text-slate-400 safe-truncate w-full" title="<%= lead.messageNote %>">
+                            <span class="text-xs text-slate-400 safe-truncate w-full leading-5"
+                                title="<%= lead.messageNote %>">
                                 <%= lead.messageNote || 'No notes added.' %>
                             </span>

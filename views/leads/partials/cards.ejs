@@ -5,7 +5,7 @@
     </div>
     <div class="mb-3 h-px w-full bg-slate-200"></div>
 
-    <div class="space-y-3 min-w-0">
+    <div class="grid grid-cols-1 gap-3 min-w-0 md:grid-cols-2 md:gap-2.5">
         <% leads.forEach((lead)=> { %>
             <%- include('mobile-card', { lead }) %>
                 <% }); %>
