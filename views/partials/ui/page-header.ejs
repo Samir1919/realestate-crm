@@ -20,11 +20,12 @@
                             <%= headerAction.label %>
                         </a>
                         <% } else { %>
-                            <button type="<%= headerAction.buttonType || 'button' %>" <% if (headerAction.id) { %> id="
-                                <%= headerAction.id %>"<% } %> class="<%= headerAction.className %>">
-                                            <%= headerAction.label %>
-                            </button>
-                            <% } %>
+                            <% const actionId=headerAction.id ? String(headerAction.id).trim() : '' ; %>
+                                <button type="<%= headerAction.buttonType || 'button' %>" <%- actionId ? ' id="' +
+                                    actionId + '"' : '' %> class="<%= headerAction.className %>">
+                                        <%= headerAction.label %>
+                                </button>
+                                <% } %>
                 </div>
                 <% } %>
         </div>
