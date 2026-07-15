@@ -1,0 +1,184 @@
+function restoreBulkSelectionFromStorage() {
+const raw = sessionStorage.getItem(bulkSelectionStorageKey);
+if (!raw) {
+return;
+}
+
+try {
+const storedIds = JSON.parse(raw);
+if (!Array.isArray(storedIds)) {
+return;
+}
+
+storedIds.forEach((id) => {
+const normalized = String(id || '').trim();
+if (normalized) {
+selectedLeadIds.add(normalized);
+}
+});
+} catch (error) {
+sessionStorage.removeItem(bulkSelectionStorageKey);
+}
+}
+
+function persistBulkSelection() {
+sessionStorage.setItem(bulkSelectionStorageKey, JSON.stringify(Array.from(selectedLeadIds)));
+}
+
+function getLeadSelectionCheckboxes() {
+return Array.from(document.querySelectorAll('.lead-select-checkbox'));
+}
+
+function getVisibleLeadIds() {
+return new Set(getLeadSelectionCheckboxes().map((checkbox) => checkbox.dataset.leadId).filter(Boolean));
+}
+
+function getLeadDisplayLabel(leadId) {
+const leadCheckbox = document.querySelector(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+if (leadCheckbox && String(leadCheckbox.dataset.leadName || '').trim()) {
+return leadCheckbox.dataset.leadName.trim();
+}
+
+return `Lead ${String(leadId).slice(-6)}`;
+}
+
+function updateBulkSelectionUI() {
+const selectedCount = selectedLeadIds.size;
+const visibleLeadIds = getVisibleLeadIds();
+const selectAllLeads = document.getElementById('selectAllLeads');
+let selectedOnPage = 0;
+
+visibleLeadIds.forEach((leadId) => {
+if (selectedLeadIds.has(leadId)) {
+selectedOnPage += 1;
+}
+});
+
+if (bulkSelectedCount) {
+bulkSelectedCount.textContent = `Page: ${selectedOnPage} · All: ${selectedCount}`;
+}
+
+if (bulkAssignPanel) {
+bulkAssignPanel.classList.toggle('hidden', selectedCount === 0);
+}
+
+if (bulkAssignBtn) {
+bulkAssignBtn.disabled = selectedCount === 0;
+}
+
+const allSelected = visibleLeadIds.size > 0 && Array.from(visibleLeadIds).every((leadId) =>
+selectedLeadIds.has(leadId));
+
+if (selectAllLeads) {
+selectAllLeads.checked = allSelected;
+selectAllLeads.indeterminate = !allSelected && selectedOnPage > 0;
+}
+
+persistBulkSelection();
+}
+
+function syncLeadCheckboxState(leadId, checked) {
+if (!leadId) {
+return;
+}
+
+const matchingCheckboxes = document.querySelectorAll(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+matchingCheckboxes.forEach((checkbox) => {
+checkbox.checked = checked;
+});
+}
+
+function bindLeadSelectionEvents() {
+const checkboxes = getLeadSelectionCheckboxes();
+const selectAllLeads = document.getElementById('selectAllLeads');
+
+checkboxes.forEach((checkbox) => {
+const leadId = checkbox.dataset.leadId;
+if (selectedLeadIds.has(leadId)) {
+checkbox.checked = true;
+}
+
+if (checkbox.dataset.bulkBound === '1') {
+return;
+}
+checkbox.dataset.bulkBound = '1';
+
+checkbox.addEventListener('change', () => {
+const id = checkbox.dataset.leadId;
+if (!id) {
+return;
+}
+
+if (checkbox.checked) {
+selectedLeadIds.add(id);
+} else {
+selectedLeadIds.delete(id);
+}
+
+syncLeadCheckboxState(id, checkbox.checked);
+updateBulkSelectionUI();
+});
+});
+
+if (selectAllLeads) {
+if (selectAllLeads.dataset.bulkBound !== '1') {
+selectAllLeads.dataset.bulkBound = '1';
+selectAllLeads.addEventListener('change', () => {
+const shouldSelect = selectAllLeads.checked;
+const liveCheckboxes = getLeadSelectionCheckboxes();
+
+liveCheckboxes.forEach((checkbox) => {
+const id = checkbox.dataset.leadId;
+if (!id) {
+return;
+}
+
+if (shouldSelect) {
+selectedLeadIds.add(id);
+} else {
+selectedLeadIds.delete(id);
+}
+
+syncLeadCheckboxState(id, shouldSelect);
+});
+
+updateBulkSelectionUI();
+});
+}
+}
+
+if (bulkClearSelectionBtn) {
+if (bulkClearSelectionBtn.dataset.bulkBound === '1') {
+updateBulkSelectionUI();
+} else {
+bulkClearSelectionBtn.dataset.bulkBound = '1';
+bulkClearSelectionBtn.addEventListener('click', () => {
+selectedLeadIds.clear();
+getLeadSelectionCheckboxes().forEach((checkbox) => {
+checkbox.checked = false;
+});
+updateBulkSelectionUI();
+});
+}
+}
+
+if (bulkClearPageSelectionBtn) {
+if (bulkClearPageSelectionBtn.dataset.bulkBound === '1') {
+updateBulkSelectionUI();
+} else {
+bulkClearPageSelectionBtn.dataset.bulkBound = '1';
+bulkClearPageSelectionBtn.addEventListener('click', () => {
+const visibleLeadIds = getVisibleLeadIds();
+
+visibleLeadIds.forEach((leadId) => {
+selectedLeadIds.delete(leadId);
+syncLeadCheckboxState(leadId, false);
+});
+
+updateBulkSelectionUI();
+});
+}
+}
+
+updateBulkSelectionUI();
+}

@@ -1,0 +1,36 @@
+name: Visual Regression Scaffold
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "views/**"
+      - "public/css/**"
+      - "src/styles/**"
+      - "tailwind.config.js"
+  workflow_dispatch:
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Placeholder for screenshot diff tool
+        run: |
+          echo "Add your visual regression command here (e.g., Playwright/Percy/Chromatic)."
+          echo "This scaffold is intentionally non-blocking until a snapshot baseline is added."

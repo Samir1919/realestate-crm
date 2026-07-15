@@ -1,0 +1,32 @@
+<div id="bulkAssignConfirmModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 class="text-xl font-bold text-gray-800">Confirm Bulk Assign</h3>
+            <button type="button" id="closeBulkAssignConfirmModalBtn"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <div class="p-6 space-y-4">
+            <p id="bulkAssignConfirmSummary" class="text-sm text-gray-600">
+                You are about to assign selected leads.
+            </p>
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Target Employee</p>
+                <p id="bulkAssignConfirmAssignee" class="mt-1 text-sm font-semibold text-slate-800">Unassigned</p>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Leads Preview</p>
+                <ul id="bulkAssignPreviewList" class="mt-2 max-h-40 space-y-1 overflow-y-auto text-sm text-slate-700">
+                </ul>
+                <p id="bulkAssignPreviewMeta" class="mt-2 text-xs text-slate-500"></p>
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" id="cancelBulkAssignConfirmBtn"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button type="button" id="confirmBulkAssignBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+

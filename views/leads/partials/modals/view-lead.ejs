@@ -1,0 +1,104 @@
+<div id="viewLeadModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 sticky top-0 bg-white z-10">
+            <h3 class="text-xl font-bold text-gray-800">Lead Details</h3>
+            <button type="button" onclick="closeViewModal()"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Reference</p>
+                    <p id="view_referenceNumber" class="mt-1 text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Customer Name</p>
+                    <p id="view_customerName" class="mt-1 text-sm font-semibold text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Phone</p>
+                    <p id="view_phone" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Location</p>
+                    <p id="view_preferredLocation" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Property Type</p>
+                    <p id="view_propertyType" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Budget</p>
+                    <p id="view_budget" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Preferred Size</p>
+                    <p id="view_preferredSize" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Bedrooms</p>
+                    <p id="view_bedrooms" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Purpose</p>
+                    <p id="view_purpose" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Assigned Employee</p>
+                    <p id="view_assignedUser" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Source</p>
+                    <p id="view_source" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Priority</p>
+                    <p id="view_priority" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Lead Type</p>
+                    <p id="view_leadType" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Status</p>
+                    <p id="view_status" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Lead State</p>
+                    <p id="view_isActive" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Follow-up Date</p>
+                    <p id="view_followUpDate" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4 md:col-span-2">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Message Note</p>
+                    <p id="view_messageNote" class="mt-1 text-sm text-gray-900">—</p>
+                </div>
+            </div>
+            <%- include('../view-request-history') %>
+                <div class="flex justify-end pt-2">
+                    <button type="button" onclick="closeViewModal()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Close</button>
+                </div>
+        </div>
+    </div>
+</div>

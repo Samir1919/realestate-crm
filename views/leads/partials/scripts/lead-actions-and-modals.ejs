@@ -1,0 +1,458 @@
+    function openEditModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            const lead = JSON.parse(leadAttr);
+            openEditModal(lead);
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    function openDeleteModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (leadAttr) {
+            try {
+                openDeleteModal(JSON.parse(leadAttr));
+                return;
+            } catch (err) {
+                console.error('Failed to parse lead data', err);
+            }
+        }
+
+        const leadId = button.getAttribute('data-id');
+        if (leadId) {
+            openDeleteModal({ _id: leadId });
+        }
+    }
+
+    function openRequestInactiveModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            openRequestInactiveModal(JSON.parse(leadAttr));
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    function openRestoreModalFromButton(button) {
+        const leadId = button.getAttribute('data-id');
+        if (leadId) {
+            openRestoreModal(leadId);
+        }
+    }
+
+    function openRejectLeadRequestModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            openRejectLeadRequestModal(JSON.parse(leadAttr));
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    function openViewModalFromButton(button) {
+        const leadAttr = button.getAttribute('data-lead');
+        if (!leadAttr) return;
+        try {
+            const lead = JSON.parse(leadAttr);
+            openViewModal(lead);
+        } catch (err) {
+            console.error('Failed to parse lead data', err);
+        }
+    }
+
+    window.openEditModalFromButton = openEditModalFromButton;
+    window.openDeleteModalFromButton = openDeleteModalFromButton;
+    window.openRequestInactiveModalFromButton = openRequestInactiveModalFromButton;
+    window.openRestoreModalFromButton = openRestoreModalFromButton;
+    window.openRejectLeadRequestModalFromButton = openRejectLeadRequestModalFromButton;
+    window.openViewModalFromButton = openViewModalFromButton;
+
+    document.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.edit-lead-btn');
+        if (editButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openEditModalFromButton(editButton);
+            return;
+        }
+
+        const deleteButton = event.target.closest('.delete-lead-btn');
+        if (deleteButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openDeleteModalFromButton(deleteButton);
+            return;
+        }
+
+        const requestInactiveButton = event.target.closest('.inactive-request-btn');
+        if (requestInactiveButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openRequestInactiveModalFromButton(requestInactiveButton);
+            return;
+        }
+
+        const restoreButton = event.target.closest('.restore-lead-btn');
+        if (restoreButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openRestoreModalFromButton(restoreButton);
+            return;
+        }
+
+        const rejectButton = event.target.closest('.reject-inactive-request-btn');
+        if (rejectButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openRejectLeadRequestModalFromButton(rejectButton);
+            return;
+        }
+
+        const viewButton = event.target.closest('.view-lead-btn');
+        if (viewButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            openViewModalFromButton(viewButton);
+        }
+    });
+
+    function openEditModal(lead) {
+        const modal = document.getElementById('editLeadModal');
+        const form = document.getElementById('editLeadForm');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !modalPanel) return;
+
+        form.action = `/leads/update/${lead._id}`;
+
+        document.getElementById('edit_customerName').value = lead.customerName || '';
+        document.getElementById('edit_phone').value = sanitizePhoneInputValue(lead.phone || '');
+        document.getElementById('edit_preferredLocation').value = lead.preferredLocation || '';
+        document.getElementById('edit_propertyType').value = lead.propertyType || '';
+        document.getElementById('edit_budgetMin').value = lead.budgetMin || '';
+        document.getElementById('edit_budgetMax').value = lead.budgetMax || '';
+        document.getElementById('edit_preferredSize').value = lead.preferredSize || '';
+        document.getElementById('edit_bedrooms').value = lead.bedrooms || '';
+        document.getElementById('edit_purpose').value = lead.purpose || '';
+        document.getElementById('edit_source').value = lead.source || '';
+        document.getElementById('edit_assignedUser').value = (lead.assignedUser && (lead.assignedUser._id || lead.assignedUser)) || '';
+        document.getElementById('edit_priority').value = lead.priority || '';
+        document.getElementById('edit_leadType').value = lead.leadType || 'good';
+        document.getElementById('edit_status').value = lead.status || 'new';
+        document.getElementById('edit_isActive').value = lead.isActive === false ? 'false' : 'true';
+        document.getElementById('edit_messageNote').value = lead.messageNote || '';
+
+        if (lead.followUpDate) {
+            const date = new Date(lead.followUpDate);
+            const formattedDate = date.toISOString().split('T')[0];
+            document.getElementById('edit_followUpDate').value = formattedDate;
+        } else {
+            document.getElementById('edit_followUpDate').value = '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    function openDeleteModal(lead) {
+        const modal = document.getElementById('deleteLeadModal');
+        const form = document.getElementById('deleteLeadForm');
+        const modalPanel = modal ? modal.children[0] : null;
+        const title = document.getElementById('deleteLeadModalTitle');
+        const description = document.getElementById('deleteLeadModalDescription');
+        const submitButton = document.getElementById('deleteLeadSubmitBtn');
+        const reviewNote = document.getElementById('deleteLeadReviewNote');
+
+        if (!modal || !form || !modalPanel || !lead || !lead._id) return;
+
+        form.action = `/leads/delete/${lead._id}`;
+
+        const hasPendingRequest = lead.inactiveRequest && lead.inactiveRequest.status === 'pending';
+        const requester = hasPendingRequest ? (lead.inactiveRequest.requestedByName || 'A sales user') : '';
+        const requestNote = hasPendingRequest && lead.inactiveRequest.note ? ` Reason: ${lead.inactiveRequest.note}` : '';
+
+        if (hasPendingRequest) {
+            title.textContent = 'Approve Inactive Request';
+            description.textContent = `${requester} requested admin approval to mark this lead inactive.${requestNote}`;
+            submitButton.textContent = 'Approve & Inactive';
+            submitButton.className = 'bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition';
+            reviewNote.classList.remove('hidden');
+        } else {
+            title.textContent = 'Archive Lead';
+            description.textContent = 'This will mark the lead as inactive and hide it from the default active list. You can still find it later from the inactive filter.';
+            submitButton.textContent = 'Archive';
+            submitButton.className = 'bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition';
+            reviewNote.classList.add('hidden');
+            reviewNote.value = '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    function openRequestInactiveModal(lead) {
+        const modal = document.getElementById('requestLeadInactiveModal');
+        const form = document.getElementById('requestLeadInactiveForm');
+        const description = document.getElementById('requestLeadInactiveDescription');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !description || !modalPanel || !lead || !lead._id) return;
+
+        form.action = `/leads/request-inactive/${lead._id}`;
+        description.textContent = `Send ${lead.customerName || 'this lead'} to admin for inactive approval.`;
+        const textarea = form.querySelector('textarea[name="requestNote"]');
+        if (textarea) {
+            textarea.value = '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeRequestInactiveModal() {
+        const modal = document.getElementById('requestLeadInactiveModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    function openRestoreModal(leadId) {
+        const modal = document.getElementById('restoreLeadModal');
+        const form = document.getElementById('restoreLeadForm');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !modalPanel) return;
+
+        form.action = `/leads/restore/${leadId}`;
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeRestoreModal() {
+        const modal = document.getElementById('restoreLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    function openRejectLeadRequestModal(lead) {
+        const modal = document.getElementById('rejectLeadRequestModal');
+        const form = document.getElementById('rejectLeadRequestForm');
+        const description = document.getElementById('rejectLeadRequestDescription');
+        const modalPanel = modal ? modal.children[0] : null;
+
+        if (!modal || !form || !description || !modalPanel || !lead || !lead._id) return;
+
+        form.action = `/leads/reject-inactive/${lead._id}`;
+        description.textContent = `Reject inactive request for ${lead.customerName || 'this lead'}. The lead will stay active.`;
+        const textarea = form.querySelector('textarea[name="reviewNote"]');
+        if (textarea) {
+            textarea.value = '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeRejectLeadRequestModal() {
+        const modal = document.getElementById('rejectLeadRequestModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    function openViewModal(lead) {
+        const modal = document.getElementById('viewLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+
+        const formatValue = (value) => value || '—';
+        const formatDate = (value) => {
+            if (!value) return '—';
+            try {
+                return new Date(value).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                return value;
+            }
+        };
+
+        document.getElementById('view_referenceNumber').textContent = formatValue(lead.referenceNumber || lead.leadNumber || lead._id);
+        document.getElementById('view_customerName').textContent = formatValue(lead.customerName);
+        document.getElementById('view_phone').textContent = formatValue(lead.phone);
+        document.getElementById('view_preferredLocation').textContent = formatValue(lead.preferredLocation);
+        document.getElementById('view_propertyType').textContent = formatValue(lead.propertyType);
+        document.getElementById('view_budget').textContent = `৳${lead.budgetMin || 0} - ৳${lead.budgetMax || 0}`;
+        document.getElementById('view_preferredSize').textContent = formatValue(lead.preferredSize);
+        document.getElementById('view_bedrooms').textContent = formatValue(lead.bedrooms);
+        document.getElementById('view_purpose').textContent = formatValue(lead.purpose);
+        document.getElementById('view_assignedUser').textContent = formatValue(lead.assignedUser && lead.assignedUser.name ? lead.assignedUser.name : 'Unassigned');
+        document.getElementById('view_source').textContent = formatValue(lead.source);
+        document.getElementById('view_priority').textContent = formatValue(lead.priority);
+        document.getElementById('view_leadType').textContent = formatValue((lead.leadType || 'good').toUpperCase());
+        document.getElementById('view_status').textContent = formatValue(lead.status);
+        document.getElementById('view_isActive').textContent = lead.isActive === false ? 'Inactive' : 'Active';
+        document.getElementById('view_followUpDate').textContent = formatDate(lead.followUpDate);
+        document.getElementById('view_messageNote').textContent = formatValue(lead.messageNote);
+
+        const requestStatus = lead.inactiveRequest && lead.inactiveRequest.status ? lead.inactiveRequest.status : 'none';
+        const requestStatusBadge = document.getElementById('view_requestStatus');
+        const requestSummary = document.getElementById('view_requestSummary');
+        const requestStatusMap = {
+            pending: {
+                label: 'Pending Review',
+                className: 'inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border bg-amber-100 text-amber-800 border-amber-200'
+            },
+            approved: {
+                label: 'Approved',
+                className: 'inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border bg-emerald-100 text-emerald-800 border-emerald-200'
+            },
+            rejected: {
+                label: 'Rejected',
+                className: 'inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border bg-rose-100 text-rose-800 border-rose-200'
+            },
+            none: {
+                label: 'No Request',
+                className: 'inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border bg-slate-100 text-slate-700 border-slate-200'
+            }
+        };
+        const requestState = requestStatusMap[requestStatus] || requestStatusMap.none;
+
+        if (requestStatusBadge) {
+            requestStatusBadge.textContent = requestState.label;
+            requestStatusBadge.className = requestState.className;
+        }
+
+        if (requestSummary) {
+            if (requestStatus === 'none') {
+                requestSummary.textContent = 'No inactive request history yet.';
+            } else if (requestStatus === 'pending') {
+                requestSummary.textContent = 'Waiting for admin review.';
+            } else if (requestStatus === 'approved') {
+                requestSummary.textContent = 'Admin approved the inactive request.';
+            } else {
+                requestSummary.textContent = 'Admin reviewed and rejected the inactive request.';
+            }
+        }
+
+        document.getElementById('view_requestedBy').textContent = formatValue(lead.inactiveRequest && lead.inactiveRequest.requestedByName);
+        document.getElementById('view_requestedAt').textContent = formatDate(lead.inactiveRequest && lead.inactiveRequest.requestedAt);
+        document.getElementById('view_requestNote').textContent = formatValue(lead.inactiveRequest && lead.inactiveRequest.note);
+        document.getElementById('view_reviewedBy').textContent = formatValue(lead.inactiveRequest && lead.inactiveRequest.reviewedByName);
+        document.getElementById('view_reviewedAt').textContent = formatDate(lead.inactiveRequest && lead.inactiveRequest.reviewedAt);
+        document.getElementById('view_reviewNote').textContent = formatValue(lead.inactiveRequest && lead.inactiveRequest.reviewNote);
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modalPanel.classList.remove('scale-95');
+        lockBodyScroll();
+    }
+
+    function closeViewModal() {
+        const modal = document.getElementById('viewLeadModal');
+        const modalPanel = modal ? modal.children[0] : null;
+        if (!modal || !modalPanel) return;
+        modalPanel.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            unlockBodyScroll();
+        }, 150);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        if (leadModal && !leadModal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+
+    window.onclick = function (event) {
+        const editModal = document.getElementById('editLeadModal');
+        const deleteModal = document.getElementById('deleteLeadModal');
+        const requestInactiveModal = document.getElementById('requestLeadInactiveModal');
+        const restoreModal = document.getElementById('restoreLeadModal');
+        const rejectLeadRequestModal = document.getElementById('rejectLeadRequestModal');
+        const viewModal = document.getElementById('viewLeadModal');
+
+        if (event.target == editModal) {
+            closeEditModal();
+        }
+        if (event.target == deleteModal) {
+            closeDeleteModal();
+        }
+        if (event.target == requestInactiveModal) {
+            closeRequestInactiveModal();
+        }
+        if (event.target == restoreModal) {
+            closeRestoreModal();
+        }
+        if (event.target == rejectLeadRequestModal) {
+            closeRejectLeadRequestModal();
+        }
+        if (event.target == viewModal) {
+            closeViewModal();
+        }
+    };
+
+    startRealtimePolling();

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const leadController = require('../controllers/leadController');
 const { canAccess } = require('../utils/permissions');
+const { registerLeadRoutes } = require('./leadsRoutes');
+const { registerLeadApiRoutes } = require('./leadsApiRoutes');
 
 function attachRole(req, res, next) {
     req.userRole = req.session && req.session.user && req.session.user.role
@@ -25,24 +27,15 @@ function requireRoutePermission(permissionKey) {
 // Dashboard
 router.get('/', leadController.getDashboard);
 
-// Leads API
-router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.getLeadsApi);
-router.get('/api/leads/version', requireRoutePermission('viewLeads'), leadController.getLeadsVersion);
+registerLeadApiRoutes(router, {
+    leadController,
+    requireRoutePermission
+});
 
-// Leads & Timeline
-router.get('/leads', leadController.getLeads);
-router.post('/leads', leadController.addLead);
-router.get('/leads/export.csv', leadController.exportLeadsCsv);
-router.post('/leads/email-export', requireRoutePermission('viewLeads'), leadController.emailExportLeads);
-router.post('/leads/import', leadController.importLeadsCsv);
-router.post('/leads/update/:id', leadController.updateLead);
-router.post('/leads/assign-bulk', leadController.bulkAssignLeads);
-router.post('/leads/request-inactive/:id', leadController.requestLeadInactive);
-router.post('/leads/delete/:id', leadController.deleteLead);
-router.post('/leads/reject-inactive/:id', leadController.rejectLeadInactiveRequest);
-router.post('/leads/restore/:id', leadController.restoreLead);
-
-router.post('/leads/activity', requireRoutePermission('updateLead'), leadController.addTimelineActivity);
+registerLeadRoutes(router, {
+    leadController,
+    requireRoutePermission
+});
 
 
 

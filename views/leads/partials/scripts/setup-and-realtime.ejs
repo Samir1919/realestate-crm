@@ -1,0 +1,195 @@
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const leadModal = document.getElementById('leadModal');
+    const leadModalPanel = document.getElementById('leadModalPanel');
+    const mobileStatsToggleBtn = document.getElementById('mobileStatsToggleBtn');
+    const mobileStatsToggleLabel = document.getElementById('mobileStatsToggleLabel');
+    const mobileStatsPanel = document.getElementById('mobileStatsPanel');
+    const mobileFiltersToggleBtn = document.getElementById('mobileFiltersToggleBtn');
+    const mobileFiltersToggleLabel = document.getElementById('mobileFiltersToggleLabel');
+    const mobileFiltersPanel = document.getElementById('mobileFiltersPanel');
+    const leadsVersionStateElement = document.getElementById('leadsVersionState');
+    const realtimePollIntervalSelect = document.getElementById('realtimePollInterval');
+    const realtimePollWarning = document.getElementById('realtimePollWarning');
+    const leadDraftNotice = document.getElementById('leadDraftNotice');
+    const clearDraftBtn = document.getElementById('clearDraftBtn');
+
+    const importLeadsBtn = document.getElementById('importLeadsBtn');
+    const importCsvInput = document.getElementById('importCsvInput');
+    const addLeadForm = document.getElementById('addLeadForm');
+    const editLeadForm = document.getElementById('editLeadForm');
+    const deleteLeadForm = document.getElementById('deleteLeadForm');
+    const requestLeadInactiveForm = document.getElementById('requestLeadInactiveForm');
+    const restoreLeadForm = document.getElementById('restoreLeadForm');
+    const rejectLeadRequestForm = document.getElementById('rejectLeadRequestForm');
+    const bulkAssignPanel = document.getElementById('bulkAssignPanel');
+    const bulkAssignUser = document.getElementById('bulkAssignUser');
+    const bulkAssignBtn = document.getElementById('bulkAssignBtn');
+    const bulkClearSelectionBtn = document.getElementById('bulkClearSelectionBtn');
+    const bulkClearPageSelectionBtn = document.getElementById('bulkClearPageSelectionBtn');
+    const bulkSelectedCount = document.getElementById('bulkSelectedCount');
+    const bulkAssignConfirmModal = document.getElementById('bulkAssignConfirmModal');
+    const bulkAssignConfirmSummary = document.getElementById('bulkAssignConfirmSummary');
+    const bulkAssignConfirmAssignee = document.getElementById('bulkAssignConfirmAssignee');
+    const bulkAssignPreviewList = document.getElementById('bulkAssignPreviewList');
+    const bulkAssignPreviewMeta = document.getElementById('bulkAssignPreviewMeta');
+    const confirmBulkAssignBtn = document.getElementById('confirmBulkAssignBtn');
+    const cancelBulkAssignConfirmBtn = document.getElementById('cancelBulkAssignConfirmBtn');
+    const closeBulkAssignConfirmModalBtn = document.getElementById('closeBulkAssignConfirmModalBtn');
+    const addPhoneInput = document.getElementById('lead_phone');
+    const editPhoneInput = document.getElementById('edit_phone');
+    const addPhoneInlineError = document.getElementById('addPhoneInlineError');
+    const phoneValidationMessage = 'সঠিক ফোন নম্বর দিন। দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile।';
+    const leadDraftStorageKey = 'lead-form-draft-v1';
+    const bulkSelectionStorageKey = 'lead-bulk-selection-v1';
+    const realtimePollStorageKey = 'lead-realtime-poll-ms-v1';
+    const allowedRealtimePollIntervals = [2000, 5000, 10000, 15000, 30000];
+    const selectedLeadIds = new Set();
+
+    let bodyScrollLocks = 0;
+    let leadModalCloseTimer = null;
+    let leadsRealtimePollMs = 10000;
+    let realtimePollTimer = null;
+    let currentLeadsVersion = leadsVersionStateElement ? String(leadsVersionStateElement.value || '') : '';
+
+    function getSavedRealtimePollMs() {
+        const raw = localStorage.getItem(realtimePollStorageKey);
+        const parsed = Number.parseInt(raw || '', 10);
+
+        if (allowedRealtimePollIntervals.includes(parsed)) {
+            return parsed;
+        }
+
+        return 10000;
+    }
+
+    function applyRealtimePollSelection(nextMs) {
+        const normalizedMs = allowedRealtimePollIntervals.includes(nextMs) ? nextMs : 10000;
+        leadsRealtimePollMs = normalizedMs;
+        localStorage.setItem(realtimePollStorageKey, String(normalizedMs));
+
+        if (realtimePollIntervalSelect) {
+            realtimePollIntervalSelect.value = String(normalizedMs);
+        }
+
+        if (realtimePollWarning) {
+            realtimePollWarning.classList.toggle('hidden', normalizedMs !== 2000);
+        }
+    }
+
+    function startRealtimePolling() {
+        if (realtimePollTimer) {
+            clearInterval(realtimePollTimer);
+        }
+
+        realtimePollTimer = setInterval(async () => {
+            if (document.hidden || hasOpenModal()) {
+                return;
+            }
+
+            const nextVersion = await fetchLatestLeadsVersion();
+            if (!nextVersion || nextVersion === currentLeadsVersion) {
+                return;
+            }
+
+            const refreshed = await softRefreshLeadSections();
+            if (!refreshed) {
+                currentLeadsVersion = nextVersion;
+                if (leadsVersionStateElement) {
+                    leadsVersionStateElement.value = nextVersion;
+                }
+            }
+        }, leadsRealtimePollMs);
+    }
+
+    function getLeadsVersionCheckUrl() {
+        const currentUrl = new URL(window.location.href);
+        const versionUrl = new URL('/api/leads/version', window.location.origin);
+
+        currentUrl.searchParams.forEach((value, key) => {
+            versionUrl.searchParams.append(key, value);
+        });
+
+        return versionUrl.toString();
+    }
+
+    async function fetchLatestLeadsVersion() {
+        try {
+            const response = await fetch(getLeadsVersionCheckUrl(), {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = await response.json();
+            if (!payload || payload.success !== true || !payload.version) {
+                return null;
+            }
+
+            return String(payload.version);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    applyRealtimePollSelection(getSavedRealtimePollMs());
+
+    if (realtimePollIntervalSelect) {
+        realtimePollIntervalSelect.addEventListener('change', () => {
+            const selectedMs = Number.parseInt(realtimePollIntervalSelect.value || '', 10);
+            applyRealtimePollSelection(selectedMs);
+            startRealtimePolling();
+        });
+    }
+
+    function updateMobileStatsToggleState() {
+        if (!mobileStatsToggleBtn || !mobileStatsPanel) {
+            return;
+        }
+
+        const isOpen = !mobileStatsPanel.classList.contains('hidden');
+        mobileStatsToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        if (mobileStatsToggleLabel) {
+            mobileStatsToggleLabel.textContent = isOpen ? 'Hide Stats' : 'Show Stats';
+        }
+    }
+
+    if (mobileStatsToggleBtn && mobileStatsPanel) {
+        updateMobileStatsToggleState();
+
+        mobileStatsToggleBtn.addEventListener('click', () => {
+            mobileStatsPanel.classList.toggle('hidden');
+            updateMobileStatsToggleState();
+        });
+    }
+
+    function updateMobileFiltersToggleState() {
+        if (!mobileFiltersToggleBtn || !mobileFiltersPanel) {
+            return;
+        }
+
+        const isOpen = !mobileFiltersPanel.classList.contains('hidden');
+        mobileFiltersToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        if (mobileFiltersToggleLabel) {
+            mobileFiltersToggleLabel.textContent = isOpen ? 'Hide Filters' : 'Show Filters';
+        }
+    }
+
+    if (mobileFiltersToggleBtn && mobileFiltersPanel) {
+        updateMobileFiltersToggleState();
+
+        mobileFiltersToggleBtn.addEventListener('click', () => {
+            mobileFiltersPanel.classList.toggle('hidden');
+            updateMobileFiltersToggleState();
+        });
+    }
+

@@ -1,0 +1,183 @@
+<% const normalizedUserRole=String(userRole || '' ).toLowerCase(); const
+    canReassignLeadInEdit=normalizedUserRole==='admin' ; const canDirectlyToggleLeadState=normalizedUserRole==='admin' ;
+    %>
+
+    <div id="editLeadModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div
+            class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all scale-95 duration-300">
+            <div
+                class="flex items-center justify-between border-b border-gray-200 px-6 py-4 sticky top-0 bg-white z-10">
+                <h3 class="text-xl font-bold text-gray-800">Edit Lead</h3>
+                <button type="button" onclick="closeEditModal()"
+                    class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+            </div>
+            <form id="editLeadForm" method="POST" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                        <input id="edit_customerName" type="text" name="customerName"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input id="edit_phone" type="tel" name="phone" inputmode="tel" autocomplete="tel"
+                            pattern="^\+?[0-9]{8,15}$" minlength="8" maxlength="16"
+                            title="দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Location</label>
+                        <input id="edit_preferredLocation" type="text" name="preferredLocation"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                        <select id="edit_propertyType" name="propertyType"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="">Select</option>
+                            <option value="Land Share">Land Share</option>
+                            <option value="Ready Flat">Ready Flat</option>
+                            <option value="Land / Plot">Land / Plot</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Upcoming Project">Upcoming Project</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Budget Min (৳)</label>
+                        <input id="edit_budgetMin" type="number" name="budgetMin" value="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Budget Max (৳)</label>
+                        <input id="edit_budgetMax" type="number" name="budgetMax" value="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Size</label>
+                        <input id="edit_preferredSize" type="text" name="preferredSize"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+                        <input id="edit_bedrooms" type="number" name="bedrooms" value="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                        <select id="edit_purpose" name="purpose"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="">Select</option>
+                            <option value="Own Living">Own Living</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Rental Income">Rental Income</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                        <select id="edit_source" name="source"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="website">Website</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="google">Google</option>
+                            <option value="whatsapp">Whatsapp</option>
+                            <option value="phone">Phone</option>
+                            <option value="referral">Referral</option>
+                            <option value="walk in">Walk In</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Employee</label>
+                        <select id="edit_assignedUser" name="assignedUser"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                            <%=canReassignLeadInEdit ? '' : 'disabled' %>>
+                            <option value="">Unassigned</option>
+                            <% users.forEach((employee)=> { %>
+                                <option value="<%= employee._id %>">
+                                    <%= employee.name %> (<%= employee.role %>)
+                                </option>
+                                <% }) %>
+                        </select>
+                        <% if (!canReassignLeadInEdit) { %>
+                            <p class="mt-1 text-xs text-slate-500">Sales users cannot reassign leads from Edit.</p>
+                            <% } %>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <select id="edit_priority" name="priority"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="Warm">Warm</option>
+                            <option value="Hot">Hot</option>
+                            <option value="Cold">Cold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead Type</label>
+                        <select id="edit_leadType" name="leadType"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="good">Good</option>
+                            <option value="bad">Bad</option>
+                            <option value="spam">Spam</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="edit_status" name="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Interested">Interested</option>
+                            <option value="Site Visit Scheduled">Site Visit Scheduled</option>
+                            <option value="Site Visit Completed">Site Visit Completed</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Booking Pending">Booking Pending</option>
+                            <option value="Booked">Booked</option>
+                            <option value="Payment Running">Payment Running</option>
+                            <option value="Sold">Sold</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead State</label>
+                        <select id="edit_isActive" name="isActive"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                            <%=canDirectlyToggleLeadState ? '' : 'disabled' %>>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                        <% if (!canDirectlyToggleLeadState) { %>
+                            <p class="mt-1 text-xs text-slate-500">Sales users must use Inactive Request flow instead.
+                            </p>
+                            <% } %>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Follow-up Date</label>
+                        <input id="edit_followUpDate" type="date" name="followUpDate"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message Note</label>
+                    <textarea id="edit_messageNote" name="messageNote" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 border-t border-gray-100 pt-4">
+                    <button type="button" onclick="closeEditModal()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Save
+                        Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>

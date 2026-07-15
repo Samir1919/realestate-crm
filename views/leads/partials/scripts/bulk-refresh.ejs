@@ -1,0 +1,94 @@
+function hasOpenModal() {
+const modalIds = [
+'leadModal',
+'editLeadModal',
+'deleteLeadModal',
+'requestLeadInactiveModal',
+'restoreLeadModal',
+'rejectLeadRequestModal',
+'bulkAssignConfirmModal',
+'viewLeadModal'
+];
+
+return modalIds.some((modalId) => {
+const modal = document.getElementById(modalId);
+return modal && !modal.classList.contains('hidden') && modal.style.display !== 'none';
+});
+}
+
+async function softRefreshLeadSections() {
+if (hasOpenModal()) {
+return false;
+}
+
+const currentScrollY = window.scrollY;
+const mainScrollContainer = document.querySelector('div.flex-1.flex.flex-col.overflow-y-auto');
+const mainScrollTop = mainScrollContainer ? mainScrollContainer.scrollTop : 0;
+
+try {
+const response = await fetch(window.location.href, {
+method: 'GET',
+headers: {
+'X-Requested-With': 'XMLHttpRequest'
+}
+});
+
+if (!response.ok) {
+return false;
+}
+
+const html = await response.text();
+const parser = new DOMParser();
+const nextDocument = parser.parseFromString(html, 'text/html');
+const nextVersionState = nextDocument.getElementById('leadsVersionState');
+if (nextVersionState) {
+currentLeadsVersion = String(nextVersionState.value || '');
+if (leadsVersionStateElement) {
+leadsVersionStateElement.value = currentLeadsVersion;
+}
+}
+const sectionIds = [
+'leads-stats-section',
+'leads-table-section',
+'mobile-lead-cards',
+'leads-pagination-section'
+];
+
+let replacedAnySection = false;
+
+sectionIds.forEach((sectionId) => {
+const currentSection = document.getElementById(sectionId);
+const nextSection = nextDocument.getElementById(sectionId);
+
+if (!currentSection || !nextSection) {
+return;
+}
+
+if (currentSection.innerHTML !== nextSection.innerHTML) {
+currentSection.innerHTML = nextSection.innerHTML;
+replacedAnySection = true;
+}
+});
+
+if (!replacedAnySection) {
+return false;
+}
+
+selectedLeadIds.forEach((leadId) => {
+const checkbox = document.querySelector(`.lead-select-checkbox[data-lead-id="${leadId}"]`);
+if (!checkbox) {
+selectedLeadIds.delete(leadId);
+}
+});
+
+bindLeadSelectionEvents();
+updateBulkSelectionUI();
+window.scrollTo({ top: currentScrollY, behavior: 'auto' });
+if (mainScrollContainer) {
+mainScrollContainer.scrollTop = mainScrollTop;
+}
+return true;
+} catch (error) {
+return false;
+}
+}

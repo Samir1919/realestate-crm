@@ -1,0 +1,10 @@
+# Update this handle to your real GitHub username/org team.
+* @your-github-username
+
+# Shared app-critical areas should always get review from owner.
+/controllers/ @your-github-username
+/routes/ @your-github-username
+/models/ @your-github-username
+/utils/ @your-github-username
+/views/ @your-github-username
+/docs/ @your-github-username

@@ -1,0 +1,146 @@
+function getSelectedAssigneeName() {
+if (!bulkAssignUser) {
+return 'Unassigned';
+}
+
+const selectedOption = bulkAssignUser.options[bulkAssignUser.selectedIndex];
+return selectedOption ? selectedOption.textContent.trim() : 'Unassigned';
+}
+
+function openBulkAssignConfirmModal() {
+if (!bulkAssignConfirmModal) {
+submitBulkLeadAssign();
+return;
+}
+
+const totalSelected = selectedLeadIds.size;
+const visibleLeadIds = getVisibleLeadIds();
+let selectedOnPage = 0;
+
+visibleLeadIds.forEach((leadId) => {
+if (selectedLeadIds.has(leadId)) {
+selectedOnPage += 1;
+}
+});
+
+if (bulkAssignConfirmSummary) {
+bulkAssignConfirmSummary.textContent = `You are going to assign ${totalSelected} lead(s) in total. ${selectedOnPage}
+selected on this page.`;
+}
+
+if (bulkAssignConfirmAssignee) {
+bulkAssignConfirmAssignee.textContent = getSelectedAssigneeName();
+}
+
+if (bulkAssignPreviewList) {
+bulkAssignPreviewList.innerHTML = '';
+
+const selectedLeadIdList = Array.from(selectedLeadIds);
+const previewLimit = 8;
+const previewItems = selectedLeadIdList.slice(0, previewLimit);
+
+previewItems.forEach((leadId) => {
+const item = document.createElement('li');
+item.className = 'rounded border border-slate-200 px-2 py-1';
+item.textContent = getLeadDisplayLabel(leadId);
+bulkAssignPreviewList.appendChild(item);
+});
+
+if (bulkAssignPreviewMeta) {
+if (selectedLeadIdList.length > previewLimit) {
+bulkAssignPreviewMeta.textContent = `+${selectedLeadIdList.length - previewLimit} more selected lead(s)`;
+} else {
+bulkAssignPreviewMeta.textContent = `${selectedLeadIdList.length} lead(s) selected`;
+}
+}
+}
+
+bulkAssignConfirmModal.classList.remove('hidden');
+lockBodyScroll();
+}
+
+function closeBulkAssignConfirmModal() {
+if (!bulkAssignConfirmModal) {
+return;
+}
+
+bulkAssignConfirmModal.classList.add('hidden');
+unlockBodyScroll();
+}
+
+async function submitBulkLeadAssign() {
+if (!bulkAssignBtn || !bulkAssignUser || selectedLeadIds.size === 0) {
+return;
+}
+
+const previousLabel = bulkAssignBtn.textContent;
+bulkAssignBtn.disabled = true;
+bulkAssignBtn.textContent = 'Assigning...';
+
+try {
+const payload = new URLSearchParams();
+payload.set('assignedUser', bulkAssignUser.value || '');
+selectedLeadIds.forEach((leadId) => {
+payload.append('leadIds', leadId);
+});
+
+const response = await fetch('/leads/assign-bulk', {
+method: 'POST',
+headers: {
+'Accept': 'application/json',
+'X-Requested-With': 'XMLHttpRequest'
+},
+body: payload
+});
+
+const data = await response.json().catch(() => null);
+const message = data && data.message
+? data.message
+: (response.ok ? 'Bulk assignment completed.' : 'Bulk assignment failed.');
+
+if (!response.ok) {
+showPopupMessage(message, 'error');
+return;
+}
+
+selectedLeadIds.clear();
+sessionStorage.removeItem(bulkSelectionStorageKey);
+showPopupMessage(message, 'success');
+await softRefreshLeadSections();
+} catch (error) {
+showPopupMessage('Server connection failed. Please try again.', 'error');
+} finally {
+bulkAssignBtn.disabled = selectedLeadIds.size === 0;
+bulkAssignBtn.textContent = previousLabel;
+}
+}
+
+restoreBulkSelectionFromStorage();
+bindLeadSelectionEvents();
+
+if (bulkAssignBtn) {
+bulkAssignBtn.addEventListener('click', openBulkAssignConfirmModal);
+}
+
+if (cancelBulkAssignConfirmBtn) {
+cancelBulkAssignConfirmBtn.addEventListener('click', closeBulkAssignConfirmModal);
+}
+
+if (closeBulkAssignConfirmModalBtn) {
+closeBulkAssignConfirmModalBtn.addEventListener('click', closeBulkAssignConfirmModal);
+}
+
+if (confirmBulkAssignBtn) {
+confirmBulkAssignBtn.addEventListener('click', async () => {
+closeBulkAssignConfirmModal();
+await submitBulkLeadAssign();
+});
+}
+
+if (bulkAssignConfirmModal) {
+bulkAssignConfirmModal.addEventListener('click', (event) => {
+if (event.target === bulkAssignConfirmModal) {
+closeBulkAssignConfirmModal();
+}
+});
+}

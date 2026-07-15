@@ -1,0 +1,199 @@
+<div id="leadModal"
+    class="lead-modal fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 p-0 sm:p-4 items-end sm:items-center justify-center overscroll-contain">
+    <div id="leadModalPanel"
+        class="lead-modal-panel bg-white w-full sm:max-w-2xl max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto transform transition-all scale-95 duration-300 shadow-2xl rounded-t-2xl sm:rounded-xl">
+        <div
+            class="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4 sticky top-0 bg-white z-20">
+            <div>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800">নতুন গ্রাহকের তথ্য</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Quick Add Lead</p>
+            </div>
+            <button id="closeModalBtn"
+                class="h-10 w-10 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 text-xl font-semibold leading-none">&times;</button>
+        </div>
+        <form id="addLeadForm" action="/leads" method="POST" class="lead-form p-4 sm:p-6 space-y-4">
+            <div id="leadDraftNotice"
+                class="hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                আগের draft auto-restore করা হয়েছে।
+                <button type="button" id="clearDraftBtn" class="ml-2 font-semibold underline">Draft clear</button>
+            </div>
+
+            <section class="lead-form-section rounded-xl border border-slate-200 p-4 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500">Basic Info</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="lead_customerName">গ্রাহকের
+                            নাম</label>
+                        <input id="lead_customerName" type="text" name="customerName"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="lead_phone">ফোন নম্বর <span
+                                class="text-red-500">*</span></label>
+                        <input id="lead_phone" type="tel" name="phone" inputmode="tel" autocomplete="tel"
+                            pattern="^\+?[0-9]{8,15}$" minlength="8" maxlength="16"
+                            title="দেশ কোডসহ valid number দিন, যেমন +880..., +1..., বা local BD mobile" required
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <p id="addPhoneInlineError" class="mt-1 text-xs text-red-600 min-h-4" aria-live="polite"></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="lead-form-section rounded-xl border border-slate-200 p-4 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500">Property & Source</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">পছন্দের এলাকা (Location)</label>
+                        <input type="text" name="preferredLocation"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">প্রপার্টির ধরন</label>
+                        <select name="propertyType"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="">সিলেক্ট করুন</option>
+                            <option value="Land Share">Land Share</option>
+                            <option value="Ready Flat">Ready Flat</option>
+                            <option value="Land / Plot">Land / Plot</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Upcoming Project">Upcoming Project</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ক্রয়ের উদ্দেশ্য (Purpose)</label>
+                        <select name="purpose"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="">সিলেক্ট করুন</option>
+                            <option value="Own Living">Own Living</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Rental Income">Rental Income</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">উৎস (Source)</label>
+                        <select name="source"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="website">Website</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="google">Google</option>
+                            <option value="whatsapp" selected>Whatsapp</option>
+                            <option value="phone">Phone</option>
+                            <option value="referral">Referral</option>
+                            <option value="walk in">Walk In</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="lead-form-section rounded-xl border border-slate-200 p-4 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500">Budget & Notes</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">বাজেট Min (৳)</label>
+                        <input type="number" name="budgetMin" value="0"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">বাজেট Max (৳)</label>
+                        <input type="number" name="budgetMax" value="0"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">সাইজ (Sqft)</label>
+                        <input type="text" name="preferredSize" placeholder="e.g. 1200"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">বেডরুম</label>
+                        <input type="number" name="bedrooms" value="0"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Employee</label>
+                        <select name="assignedUser"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="">Unassigned</option>
+                            <% users.forEach((employee)=> { %>
+                                <option value="<%= employee._id %>">
+                                    <%= employee.name %> (<%= employee.role %>)
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ফলো-আপ তারিখ</label>
+                        <input type="date" name="followUpDate"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">can অগ্রধিকার (Priority)</label>
+                        <select name="priority"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="Warm">Warm</option>
+                            <option value="Hot">Hot</option>
+                            <option value="Cold">Cold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead Type</label>
+                        <select name="leadType"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="good" selected>Good</option>
+                            <option value="bad">Bad</option>
+                            <option value="spam">Spam</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">বর্তমান অবস্থা (Status)</label>
+                        <select name="status"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Interested">Interested</option>
+                            <option value="Site Visit Scheduled">Site Visit Scheduled</option>
+                            <option value="Site Visit Completed">Site Visit Completed</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Booking Pending">Booking Pending</option>
+                            <option value="Booked">Booked</option>
+                            <option value="Payment Running">Payment Running</option>
+                            <option value="Sold">Sold</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead State</label>
+                        <select name="isActive"
+                            class="lead-modal-input w-full px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="true" selected>Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">অতিরিক্ত নোট (Message Note)</label>
+                    <textarea name="messageNote" rows="3"
+                        class="lead-modal-input w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="গ্রাহক সম্পর্কে কোনো বিশেষ মন্তব্য..."></textarea>
+                </div>
+            </section>
+
+            <div
+                class="lead-modal-action-bar flex flex-col sm:flex-row sm:justify-end gap-3 border-t border-gray-100 bg-white pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sticky bottom-0 z-20">
+                <button type="button" id="cancelModalBtn"
+                    class="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-3 rounded-lg text-sm font-medium transition min-h-11">বাতিল</button>
+                <button type="submit" id="addLeadSubmitBtn"
+                    class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg text-sm font-medium shadow transition min-h-11">সংরক্ষণ
+                    করুন (Save)</button>
+            </div>
+        </form>
+    </div>
+</div>
+

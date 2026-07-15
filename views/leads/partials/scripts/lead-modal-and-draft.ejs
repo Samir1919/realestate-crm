@@ -1,0 +1,268 @@
+    function lockBodyScroll() {
+        bodyScrollLocks += 1;
+        if (bodyScrollLocks > 1) {
+            return;
+        }
+
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        document.body.dataset.prevOverflow = document.body.style.overflow || '';
+        document.body.dataset.prevPaddingRight = document.body.style.paddingRight || '';
+        document.body.style.overflow = 'hidden';
+
+        if (scrollbarWidth > 0) {
+            document.body.style.paddingRight = `${scrollbarWidth}px`;
+        }
+    }
+
+    function unlockBodyScroll() {
+        bodyScrollLocks = Math.max(0, bodyScrollLocks - 1);
+        if (bodyScrollLocks !== 0) {
+            return;
+        }
+
+        document.body.style.overflow = document.body.dataset.prevOverflow || '';
+        document.body.style.paddingRight = document.body.dataset.prevPaddingRight || '';
+        delete document.body.dataset.prevOverflow;
+        delete document.body.dataset.prevPaddingRight;
+    }
+
+    function closeModal() {
+        if (!leadModal) {
+            return;
+        }
+
+        if (leadModalPanel) {
+            leadModalPanel.classList.add('scale-95');
+        }
+
+        if (leadModalCloseTimer) {
+            clearTimeout(leadModalCloseTimer);
+        }
+
+        leadModalCloseTimer = setTimeout(() => {
+            leadModal.classList.add('hidden');
+            leadModal.classList.remove('flex');
+            leadModalCloseTimer = null;
+        }, 140);
+
+        clearAddPhoneInlineError();
+        unlockBodyScroll();
+    }
+
+    function openModal() {
+        if (!leadModal) {
+            return;
+        }
+
+        if (leadModalCloseTimer) {
+            clearTimeout(leadModalCloseTimer);
+            leadModalCloseTimer = null;
+        }
+
+        leadModal.classList.remove('hidden');
+        leadModal.classList.add('flex');
+
+        if (leadModalPanel) {
+            leadModalPanel.classList.remove('scale-95');
+        }
+
+        lockBodyScroll();
+        restoreLeadFormDraft();
+        validateAddPhoneInline(true);
+    }
+
+    if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+    if (clearDraftBtn) clearDraftBtn.addEventListener('click', clearLeadFormDraft);
+
+    if (leadModal) {
+        leadModal.addEventListener('click', (e) => {
+            if (e.target === leadModal) {
+                closeModal();
+            }
+        });
+    }
+
+    function showDraftNotice(show) {
+        if (!leadDraftNotice) {
+            return;
+        }
+
+        leadDraftNotice.classList.toggle('hidden', !show);
+    }
+
+    function saveLeadFormDraft() {
+        if (!addLeadForm) {
+            return;
+        }
+
+        const payload = {};
+        const formData = new FormData(addLeadForm);
+        for (const [name, value] of formData.entries()) {
+            payload[name] = String(value || '');
+        }
+
+        localStorage.setItem(leadDraftStorageKey, JSON.stringify(payload));
+    }
+
+    function clearLeadFormDraft() {
+        localStorage.removeItem(leadDraftStorageKey);
+        showDraftNotice(false);
+    }
+
+    function restoreLeadFormDraft() {
+        if (!addLeadForm) {
+            return;
+        }
+
+        const rawDraft = localStorage.getItem(leadDraftStorageKey);
+        if (!rawDraft) {
+            showDraftNotice(false);
+            return;
+        }
+
+        try {
+            const draft = JSON.parse(rawDraft);
+            let restoredAnyValue = false;
+
+            Object.entries(draft).forEach(([name, value]) => {
+                const field = addLeadForm.elements.namedItem(name);
+                if (!field || typeof field.value === 'undefined') {
+                    return;
+                }
+
+                if (String(value || '').trim()) {
+                    restoredAnyValue = true;
+                }
+
+                field.value = value;
+            });
+
+            showDraftNotice(restoredAnyValue);
+        } catch (error) {
+            localStorage.removeItem(leadDraftStorageKey);
+            showDraftNotice(false);
+        }
+    }
+
+    function clearAddPhoneInlineError() {
+        if (addPhoneInlineError) {
+            addPhoneInlineError.textContent = '';
+        }
+
+        if (addPhoneInput) {
+            addPhoneInput.classList.remove('border-red-400', 'ring-red-200');
+        }
+    }
+
+    function setAddPhoneInlineError(message) {
+        if (!addPhoneInput) {
+            return;
+        }
+
+        if (addPhoneInlineError) {
+            addPhoneInlineError.textContent = message || '';
+        }
+
+        if (message) {
+            addPhoneInput.classList.add('border-red-400');
+            return;
+        }
+
+        addPhoneInput.classList.remove('border-red-400');
+    }
+
+    function sanitizePhoneInputValue(value) {
+        const rawValue = String(value || '').trim();
+        if (!rawValue) {
+            return '';
+        }
+
+        const compactValue = rawValue.replace(/[\s().-]/g, '');
+        const normalizedPlusPrefix = compactValue.startsWith('00') ? `+${compactValue.slice(2)}` : compactValue;
+
+        if (normalizedPlusPrefix.startsWith('+')) {
+            return `+${normalizedPlusPrefix.slice(1).replace(/\D/g, '')}`;
+        }
+
+        return normalizedPlusPrefix.replace(/\D/g, '');
+    }
+
+    function isValidPhoneInputValue(value) {
+        return /^(\+\d{8,15}|\d{8,15})$/.test(sanitizePhoneInputValue(value));
+    }
+
+    function bindPhoneSanitizer(input) {
+        if (!input) {
+            return;
+        }
+
+        const applySanitizedValue = () => {
+            input.value = sanitizePhoneInputValue(input.value);
+        };
+
+        input.addEventListener('input', applySanitizedValue);
+        input.addEventListener('blur', applySanitizedValue);
+        applySanitizedValue();
+    }
+
+    bindPhoneSanitizer(addPhoneInput);
+    bindPhoneSanitizer(editPhoneInput);
+
+    function validateAddPhoneInline(skipRequiredCheck = false) {
+        if (!addPhoneInput) {
+            return true;
+        }
+
+        const sanitizedValue = sanitizePhoneInputValue(addPhoneInput.value);
+        addPhoneInput.value = sanitizedValue;
+
+        if (!sanitizedValue && !skipRequiredCheck) {
+            setAddPhoneInlineError('ফোন নম্বর দেয়া বাধ্যতামূলক।');
+            return false;
+        }
+
+        if (sanitizedValue && !isValidPhoneInputValue(sanitizedValue)) {
+            setAddPhoneInlineError(phoneValidationMessage);
+            return false;
+        }
+
+        clearAddPhoneInlineError();
+        return true;
+    }
+
+    function setupFormKeyboardFlow(form) {
+        if (!form) {
+            return;
+        }
+
+        const fields = Array.from(form.querySelectorAll('input, select, textarea')).filter((element) => {
+            if (!element || element.disabled) {
+                return false;
+            }
+            return element.type !== 'hidden';
+        });
+
+        fields.forEach((field, index) => {
+            field.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' || field.tagName.toLowerCase() === 'textarea') {
+                    return;
+                }
+
+                event.preventDefault();
+                const nextField = fields[index + 1];
+                if (nextField) {
+                    nextField.focus();
+                } else {
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.focus();
+                    }
+                }
+            });
+        });
+    }
+
+    setupFormKeyboardFlow(addLeadForm);
+

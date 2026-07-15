@@ -1,0 +1,96 @@
+<div id="deleteLeadModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 id="deleteLeadModalTitle" class="text-xl font-bold text-gray-800">Archive Lead</h3>
+            <button type="button" onclick="closeDeleteModal()"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <form id="deleteLeadForm" method="POST" class="p-6 space-y-4">
+            <p id="deleteLeadModalDescription" class="text-sm text-gray-600">This will mark the lead as inactive and
+                hide it from the default active
+                list. You can still find it later from the inactive filter.</p>
+            <textarea id="deleteLeadReviewNote" name="reviewNote" rows="3"
+                class="hidden w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Optional approval note for the requester..."></textarea>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeDeleteModal()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button id="deleteLeadSubmitBtn" type="submit"
+                    class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Archive</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="requestLeadInactiveModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 class="text-xl font-bold text-gray-800">Request Inactive Approval</h3>
+            <button type="button" onclick="closeRequestInactiveModal()"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <form id="requestLeadInactiveForm" method="POST" class="p-6 space-y-4">
+            <p id="requestLeadInactiveDescription" class="text-sm text-gray-600">Send this lead to admin for inactive
+                approval.</p>
+            <textarea name="requestNote" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Why should this lead be marked inactive?"></textarea>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeRequestInactiveModal()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button type="submit"
+                    class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Send
+                    Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="restoreLeadModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 class="text-xl font-bold text-gray-800">Restore Lead</h3>
+            <button type="button" onclick="closeRestoreModal()"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <form id="restoreLeadForm" method="POST" class="p-6 space-y-4">
+            <p class="text-sm text-gray-600">This will mark the lead as active and bring it back into the default active
+                list.</p>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeRestoreModal()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button type="submit"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Restore</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="rejectLeadRequestModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all scale-95 duration-300">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 class="text-xl font-bold text-gray-800">Reject Inactive Request</h3>
+            <button type="button" onclick="closeRejectLeadRequestModal()"
+                class="text-gray-400 hover:text-gray-600 text-2xl font-semibold">&times;</button>
+        </div>
+        <form id="rejectLeadRequestForm" method="POST" class="p-6 space-y-4">
+            <p id="rejectLeadRequestDescription" class="text-sm text-gray-600">This lead will remain active. You can
+                optionally explain why.</p>
+            <textarea name="reviewNote" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Optional rejection note..."></textarea>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeRejectLeadRequestModal()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button type="submit"
+                    class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition">Reject
+                    Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
