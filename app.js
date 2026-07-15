@@ -135,6 +135,10 @@ app.get('/logout', (req, res) => {
     });
 });
 
+app.get('/healthz', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 if (process.env.NODE_ENV !== 'production') {
     app.get('/seed-user', async (req, res) => {
         try {
@@ -516,8 +520,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`💻 CRM Server running on http://127.0.0.1:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+    console.log(`💻 CRM Server running on http://${HOST}:${PORT}`);
 });
 
 // Daily lead export (email)

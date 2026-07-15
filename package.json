@@ -13,6 +13,11 @@
     "build": "npm run build:css",
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "docker:build": "docker build -t realestate-crm:latest .",
+    "docker:up": "docker compose up -d --build",
+    "docker:up:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build",
+    "docker:down": "docker compose down",
+    "docker:down:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml down",
     "normalize:phones": "node scripts/normalizeLeadPhones.js",
     "db:drop": "node scripts/dropDatabase.js"
   },

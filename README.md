@@ -26,6 +26,35 @@ Internal CRM for lead management, assignment, follow-up, and admin role control.
 - `npm run build` - build CSS assets
 - `node --test tests/*.test.js` - run test files
 
+## Docker
+
+### Production-style (App only)
+
+1. Configure `.env.production` with at least:
+   - `NODE_ENV=production`
+   - `PORT=3000`
+   - `MONGO_URI=...` (external MongoDB connection string)
+   - `SESSION_SECRET=...`
+2. Start:
+   `npm run docker:up`
+3. Stop:
+   `npm run docker:down`
+
+### Local Docker (App + Mongo)
+
+1. Start with local Mongo service:
+   `npm run docker:up:local`
+2. Stop local stack:
+   `npm run docker:down:local`
+
+### Docker Scripts
+
+- `npm run docker:build` - build image manually
+- `npm run docker:up` - start production compose stack
+- `npm run docker:down` - stop production compose stack
+- `npm run docker:up:local` - start app with local Mongo overlay
+- `npm run docker:down:local` - stop local Mongo overlay stack
+
 ## Contributing
 
 Before opening a PR, read [CONTRIBUTING.md](CONTRIBUTING.md).
