@@ -2,15 +2,23 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const connectDB = require('./config/db');
 const crmRoutes = require('./routes/crmRoutes');
+const adminUsersRoutes = require('./routes/adminUsersRoutes');
 const User = require('./models/User');
 const Role = require('./models/Role');
 const Permission = require('./models/Permission');
+const { requireCapability } = require('./middleware/capabilityPolicy');
+const { csrfProtection } = require('./middleware/csrfProtection');
+const { logAuditEvent } = require('./utils/auditLogger');
 const {
     canAccess,
     ROLE_PERMISSIONS,
     PERMISSION_CATALOG,
+    LEGACY_PERMISSION_KEYS,
+    LEGACY_CATALOG_PERMISSION_KEYS,
+    isLegacyPermissionKey,
     ensureDefaultAccessData,
     refreshPermissionsCache
 } = require('./utils/permissions');
@@ -19,6 +27,10 @@ const app = express();
 
 // Database Connection
 connectDB();
+
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
 
 async function ensureInitialAdminUser() {
     const adminExists = await User.exists({ role: 'admin' });
@@ -63,16 +75,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
+    name: process.env.SESSION_COOKIE_NAME || 'crm.sid',
     secret: process.env.SESSION_SECRET || 'crm-secret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 12
+    }
 }));
+app.use(csrfProtection);
 
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     const currentRole = req.session?.user?.role || 'viewer';
     res.locals.currentRole = currentRole;
-    res.locals.permissions = Object.keys(PERMISSION_CATALOG).reduce((acc, permissionKey) => {
+    const permissionKeysForView = Array.from(new Set([
+        ...Object.keys(PERMISSION_CATALOG),
+        ...LEGACY_PERMISSION_KEYS
+    ]));
+
+    res.locals.permissions = permissionKeysForView.reduce((acc, permissionKey) => {
         const hasPermission = canAccess(currentRole, permissionKey);
         acc[permissionKey] = hasPermission;
         acc[String(permissionKey).toLowerCase()] = hasPermission;
@@ -85,34 +111,40 @@ app.get('/login', (req, res) => {
     res.render('auth/login', { error: null });
 });
 
-app.get('/register', requirePermission('manageUsers'), (req, res) => {
-    res.render('auth/register', { error: null });
-});
-
-app.post('/register', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        const existing = await User.findOne({ email: req.body.email });
-        if (existing) {
-            return res.status(400).render('auth/register', { error: 'User already exists' });
-        }
-
-        const user = await User.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-            role: 'viewer'
-        });
-
-        res.redirect('/admin/users?created=1');
-    } catch (err) {
-        res.status(500).render('auth/register', { error: err.message });
-    }
-});
-
 app.post('/login', async (req, res) => {
     try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user || req.body.password !== user.password) {
+        const email = String(req.body.email || '').trim().toLowerCase();
+        const password = String(req.body.password || '');
+        const user = await User.findOne({ email });
+        let isPasswordValid = false;
+
+        if (user) {
+            const storedPassword = String(user.password || '');
+            const isBcryptHash = storedPassword.startsWith('$2');
+
+            if (isBcryptHash) {
+                isPasswordValid = await user.comparePassword(password);
+            } else {
+                isPasswordValid = storedPassword === password;
+
+                if (isPasswordValid) {
+                    // Auto-upgrade legacy plaintext password to bcrypt hash.
+                    user.password = await bcrypt.hash(password, 12);
+                    await user.save();
+                }
+            }
+        }
+
+        if (!user || !isPasswordValid) {
+            await logAuditEvent(req, {
+                action: 'auth.login',
+                success: false,
+                targetType: 'user',
+                metadata: {
+                    attemptedEmail: email,
+                    reason: 'invalid_credentials'
+                }
+            });
             return res.status(401).render('auth/login', { error: 'Invalid credentials' });
         }
 
@@ -123,14 +155,51 @@ app.post('/login', async (req, res) => {
             role: user.role
         };
 
+        await logAuditEvent(req, {
+            action: 'auth.login',
+            success: true,
+            targetType: 'user',
+            targetId: String(user._id),
+            metadata: {
+                email: user.email,
+                role: user.role
+            }
+        });
+
         res.redirect('/');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'auth.login',
+            success: false,
+            targetType: 'user',
+            metadata: {
+                attemptedEmail: String(req.body.email || '').trim().toLowerCase(),
+                reason: 'server_error',
+                error: err.message
+            }
+        });
         res.status(500).render('auth/login', { error: err.message });
     }
 });
 
 app.get('/logout', (req, res) => {
+    const actorId = String(req.session?.user?.id || '').trim();
+    const actorEmail = String(req.session?.user?.email || '').trim().toLowerCase();
+    const actorRole = String(req.session?.user?.role || '').trim().toLowerCase();
+
+    logAuditEvent(req, {
+        action: 'auth.logout',
+        success: true,
+        targetType: 'user',
+        targetId: actorId,
+        metadata: {
+            email: actorEmail,
+            role: actorRole
+        }
+    });
+
     req.session.destroy(() => {
+        res.clearCookie(process.env.SESSION_COOKIE_NAME || 'crm.sid');
         res.redirect('/login');
     });
 });
@@ -169,154 +238,16 @@ app.use((req, res, next) => {
     next();
 });
 
-function requirePermission(permissionKey) {
-    return (req, res, next) => {
-        if (!req.session.user || !canAccess(req.session.user.role, permissionKey)) {
-            return res.status(403).send('Permission denied');
-        }
-        next();
-    };
-}
+app.use(adminUsersRoutes);
 
-app.get('/admin/users', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        const roles = await Role.find().select('name').sort({ name: 1 }).lean();
-        const users = await User.find().sort({ createdAt: -1 });
-        res.render('admin/users', {
-            users,
-            roles,
-            created: req.query.created === '1',
-            updated: req.query.updated === '1',
-            deleted: req.query.deleted === '1',
-            error: req.query.error || null
-        });
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
-app.post('/admin/users/create', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        await ensureDefaultAccessData();
-        await refreshPermissionsCache();
-
-        const existing = await User.findOne({ email: req.body.email });
-        if (existing) {
-            return res.redirect('/admin/users?error=User%20already%20exists');
-        }
-
-        await User.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-            role: 'viewer'
-        });
-
-        res.redirect('/admin/users?created=1');
-    } catch (err) {
-        res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
-    }
-});
-
-app.post('/admin/users/:id/role', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        const roleName = (req.body.role || '').toLowerCase();
-        const roleExists = await Role.findOne({ name: roleName });
-        if (!roleExists) {
-            return res.status(400).send('Invalid role');
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
-            { role: roleName },
-            { returnDocument: 'after' }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).send('User not found');
-        }
-
-        if (req.session.user.id.toString() === updatedUser._id.toString()) {
-            req.session.user.role = updatedUser.role;
-        }
-
-        res.redirect('/admin/users');
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
-app.post('/admin/users/:id/edit', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        const name = String(req.body.name || '').trim();
-        const email = String(req.body.email || '').trim().toLowerCase();
-
-        if (!name || !email) {
-            return res.redirect('/admin/users?error=Name%20and%20email%20are%20required');
-        }
-
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.redirect('/admin/users?error=User%20not%20found');
-        }
-
-        const duplicate = await User.findOne({
-            _id: { $ne: user._id },
-            email
-        });
-
-        if (duplicate) {
-            return res.redirect('/admin/users?error=Email%20already%20in%20use');
-        }
-
-        user.name = name;
-        user.email = email;
-        await user.save();
-
-        if (req.session.user && req.session.user.id.toString() === user._id.toString()) {
-            req.session.user.name = user.name;
-            req.session.user.email = user.email;
-        }
-
-        res.redirect('/admin/users?updated=1');
-    } catch (err) {
-        res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
-    }
-});
-
-app.post('/admin/users/:id/delete', requirePermission('manageUsers'), async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.redirect('/admin/users?error=User%20not%20found');
-        }
-
-        if (req.session.user && req.session.user.id.toString() === user._id.toString()) {
-            return res.redirect('/admin/users?error=You%20cannot%20delete%20your%20own%20account');
-        }
-
-        if (user.role === 'admin') {
-            const adminCount = await User.countDocuments({ role: 'admin' });
-            if (adminCount <= 1) {
-                return res.redirect('/admin/users?error=At%20least%20one%20admin%20must%20remain');
-            }
-        }
-
-        await User.findByIdAndDelete(user._id);
-        res.redirect('/admin/users?deleted=1');
-    } catch (err) {
-        res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
-    }
-});
-
-app.get('/admin/roles', requirePermission('manageRoles'), async (req, res) => {
+app.get('/admin/roles', requireCapability('roles.manage'), async (req, res) => {
     try {
         await ensureDefaultAccessData();
         await refreshPermissionsCache();
 
         const [roles, permissionCatalog] = await Promise.all([
             Role.find().sort({ name: 1 }).lean(),
-            Permission.find().sort({ key: 1 }).lean()
+            Permission.find({ key: { $nin: LEGACY_CATALOG_PERMISSION_KEYS } }).sort({ key: 1 }).lean()
         ]);
 
         res.render('admin/roles', {
@@ -330,7 +261,7 @@ app.get('/admin/roles', requirePermission('manageRoles'), async (req, res) => {
     }
 });
 
-app.post('/admin/roles/create', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/roles/create', requireCapability('roles.manage'), async (req, res) => {
     try {
         const name = (req.body.name || '').trim().toLowerCase();
         if (!name) {
@@ -348,13 +279,34 @@ app.post('/admin/roles/create', requirePermission('manageRoles'), async (req, re
 
         await Role.create({ name, permissions: [] });
         await refreshPermissionsCache();
+
+        await logAuditEvent(req, {
+            action: 'roles.create',
+            success: true,
+            targetType: 'role',
+            targetId: name,
+            metadata: {
+                roleName: name
+            }
+        });
+
         res.redirect('/admin/roles?success=Role%20created');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'roles.create',
+            success: false,
+            targetType: 'role',
+            targetId: String(req.body.name || '').trim().toLowerCase(),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/roles/:id/update', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/roles/:id/update', requireCapability('roles.manage'), async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
         if (!role) {
@@ -385,13 +337,36 @@ app.post('/admin/roles/:id/update', requirePermission('manageRoles'), async (req
         }
 
         await refreshPermissionsCache();
+
+        await logAuditEvent(req, {
+            action: 'roles.update',
+            success: true,
+            targetType: 'role',
+            targetId: String(role._id),
+            metadata: {
+                oldName,
+                newName
+            }
+        });
+
         res.redirect('/admin/roles?success=Role%20updated');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'roles.update',
+            success: false,
+            targetType: 'role',
+            targetId: String(req.params.id || ''),
+            metadata: {
+                attemptedName: String(req.body.name || '').trim().toLowerCase(),
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/roles/:id/delete', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/roles/:id/delete', requireCapability('roles.manage'), async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
         if (!role) {
@@ -407,13 +382,33 @@ app.post('/admin/roles/:id/delete', requirePermission('manageRoles'), async (req
         await ensureDefaultAccessData();
         await refreshPermissionsCache();
 
+        await logAuditEvent(req, {
+            action: 'roles.delete',
+            success: true,
+            targetType: 'role',
+            targetId: String(role._id),
+            metadata: {
+                deletedRoleName: role.name
+            }
+        });
+
         res.redirect('/admin/roles?success=Role%20deleted');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'roles.delete',
+            success: false,
+            targetType: 'role',
+            targetId: String(req.params.id || ''),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/roles/:id/permissions', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/roles/:id/permissions', requireCapability('roles.manage'), async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
         if (!role) {
@@ -433,8 +428,9 @@ app.post('/admin/roles/:id/permissions', requirePermission('manageRoles'), async
 
         // Protect against self-lockout: active role cannot lose manageRoles or viewLeads.
         if (activeRole && activeRole === role.name) {
-            const hasManageRoles = normalizedSelectedPermissions.includes('manageroles');
-            const hasViewLeads = normalizedSelectedPermissions.includes('viewleads');
+            const hasManageRoles = normalizedSelectedPermissions.includes('roles.manage');
+            const hasViewLeads = normalizedSelectedPermissions.includes('leads.view.all')
+                || normalizedSelectedPermissions.includes('leads.view.own');
 
             if (!hasManageRoles || !hasViewLeads) {
                 return res.redirect('/admin/roles?error=Your%20current%20role%20must%20keep%20manageRoles%20and%20viewLeads%20permissions');
@@ -456,8 +452,9 @@ app.post('/admin/roles/:id/permissions', requirePermission('manageRoles'), async
         }
 
         // Ensure at least one role keeps both manageRoles and viewLeads permissions.
-        const selectedHasManageRoles = normalizedSelectedPermissions.includes('manageroles');
-        const selectedHasViewLeads = normalizedSelectedPermissions.includes('viewleads');
+        const selectedHasManageRoles = normalizedSelectedPermissions.includes('roles.manage');
+        const selectedHasViewLeads = normalizedSelectedPermissions.includes('leads.view.all')
+            || normalizedSelectedPermissions.includes('leads.view.own');
 
         if (!selectedHasManageRoles || !selectedHasViewLeads) {
             const otherRoles = await Role.find({ _id: { $ne: role._id } })
@@ -467,7 +464,8 @@ app.post('/admin/roles/:id/permissions', requirePermission('manageRoles'), async
             const otherRoleWithManageAndView = otherRoles.some((candidate) => {
                 const normalizedPermissions = (candidate.permissions || [])
                     .map((permission) => String(permission || '').trim().toLowerCase());
-                return normalizedPermissions.includes('manageroles') && normalizedPermissions.includes('viewleads');
+                return normalizedPermissions.includes('roles.manage')
+                    && (normalizedPermissions.includes('leads.view.all') || normalizedPermissions.includes('leads.view.own'));
             });
 
             if (!otherRoleWithManageAndView) {
@@ -480,13 +478,35 @@ app.post('/admin/roles/:id/permissions', requirePermission('manageRoles'), async
         await role.save();
 
         await refreshPermissionsCache();
+
+        await logAuditEvent(req, {
+            action: 'roles.update_permissions',
+            success: true,
+            targetType: 'role',
+            targetId: String(role._id),
+            metadata: {
+                roleName: role.name,
+                permissionsCount: role.permissions.length
+            }
+        });
+
         res.redirect('/admin/roles?success=Permissions%20updated');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'roles.update_permissions',
+            success: false,
+            targetType: 'role',
+            targetId: String(req.params.id || ''),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/permissions/create', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/permissions/create', requireCapability('roles.manage'), async (req, res) => {
     try {
         const key = (req.body.key || '').trim().toLowerCase();
         const description = (req.body.description || '').trim();
@@ -495,19 +515,44 @@ app.post('/admin/permissions/create', requirePermission('manageRoles'), async (r
             return res.redirect('/admin/roles?error=Permission%20key%20format%20is%20invalid');
         }
 
+        if (isLegacyPermissionKey(key)) {
+            return res.redirect('/admin/roles?error=Legacy%20permission%20keys%20are%20blocked.%20Use%20taxonomy%20format.');
+        }
+
         const exists = await Permission.findOne({ key });
         if (exists) {
             return res.redirect('/admin/roles?error=Permission%20already%20exists');
         }
 
         await Permission.create({ key, description });
+
+        await logAuditEvent(req, {
+            action: 'permissions.create',
+            success: true,
+            targetType: 'permission',
+            targetId: key,
+            metadata: {
+                description
+            }
+        });
+
         res.redirect('/admin/roles?success=Permission%20created');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'permissions.create',
+            success: false,
+            targetType: 'permission',
+            targetId: String(req.body.key || '').trim().toLowerCase(),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/permissions/:id/update', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/permissions/:id/update', requireCapability('roles.manage'), async (req, res) => {
     try {
         const permission = await Permission.findById(req.params.id);
         if (!permission) {
@@ -522,6 +567,10 @@ app.post('/admin/permissions/:id/update', requirePermission('manageRoles'), asyn
         const newDescription = (req.body.description || '').trim();
         if (!newKey || !/^[a-z0-9:_-]+$/.test(newKey)) {
             return res.redirect('/admin/roles?error=Permission%20key%20format%20is%20invalid');
+        }
+
+        if (isLegacyPermissionKey(newKey)) {
+            return res.redirect('/admin/roles?error=Legacy%20permission%20keys%20are%20blocked.%20Use%20taxonomy%20format.');
         }
 
         const duplicate = await Permission.findOne({ _id: { $ne: permission._id }, key: newKey });
@@ -541,13 +590,35 @@ app.post('/admin/permissions/:id/update', requirePermission('manageRoles'), asyn
         );
 
         await refreshPermissionsCache();
+
+        await logAuditEvent(req, {
+            action: 'permissions.update',
+            success: true,
+            targetType: 'permission',
+            targetId: String(permission._id),
+            metadata: {
+                oldKey,
+                newKey
+            }
+        });
+
         res.redirect('/admin/roles?success=Permission%20updated');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'permissions.update',
+            success: false,
+            targetType: 'permission',
+            targetId: String(req.params.id || ''),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });
 
-app.post('/admin/permissions/:id/delete', requirePermission('manageRoles'), async (req, res) => {
+app.post('/admin/permissions/:id/delete', requireCapability('roles.manage'), async (req, res) => {
     try {
         const permission = await Permission.findById(req.params.id);
         if (!permission) {
@@ -565,8 +636,29 @@ app.post('/admin/permissions/:id/delete', requirePermission('manageRoles'), asyn
         );
 
         await refreshPermissionsCache();
+
+        await logAuditEvent(req, {
+            action: 'permissions.delete',
+            success: true,
+            targetType: 'permission',
+            targetId: String(permission._id),
+            metadata: {
+                deletedKey: permission.key
+            }
+        });
+
         res.redirect('/admin/roles?success=Permission%20deleted');
     } catch (err) {
+        await logAuditEvent(req, {
+            action: 'permissions.delete',
+            success: false,
+            targetType: 'permission',
+            targetId: String(req.params.id || ''),
+            metadata: {
+                error: err.message
+            }
+        });
+
         res.redirect(`/admin/roles?error=${encodeURIComponent(err.message)}`);
     }
 });

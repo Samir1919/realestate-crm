@@ -2,6 +2,56 @@
 </div> <!-- Closing Main layout row container from header.ejs -->
 
 <script>
+    const csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMetaTag ? String(csrfMetaTag.content || '') : '';
+
+    function ensureFormCsrfToken(form) {
+        if (!form || !csrfToken) {
+            return;
+        }
+
+        const method = String(form.getAttribute('method') || 'GET').toUpperCase();
+        if (method !== 'POST') {
+            return;
+        }
+
+        let input = form.querySelector('input[name="_csrf"]');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '_csrf';
+            form.appendChild(input);
+        }
+
+        input.value = csrfToken;
+    }
+
+    if (csrfToken && typeof window.fetch === 'function') {
+        const nativeFetch = window.fetch.bind(window);
+        window.fetch = function csrfAwareFetch(input, init = {}) {
+            const nextInit = { ...init };
+            const method = String(nextInit.method || 'GET').toUpperCase();
+            const isSafeMethod = method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+
+            if (!isSafeMethod) {
+                const headers = new Headers(nextInit.headers || {});
+                if (!headers.has('x-csrf-token')) {
+                    headers.set('x-csrf-token', csrfToken);
+                }
+                nextInit.headers = headers;
+            }
+
+            return nativeFetch(input, nextInit);
+        };
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('form').forEach((form) => {
+            ensureFormCsrfToken(form);
+            form.addEventListener('submit', () => ensureFormCsrfToken(form));
+        });
+    });
+
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
     const openBtn = document.getElementById('open-sidebar');

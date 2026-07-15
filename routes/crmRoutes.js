@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const leadController = require('../controllers/leadController');
-const { canAccess } = require('../utils/permissions');
+const { requirePermissionPolicy, requireLeadPolicy } = require('../middleware/policy');
 const { registerLeadRoutes } = require('./leadsRoutes');
 const { registerLeadApiRoutes } = require('./leadsApiRoutes');
 
@@ -14,27 +14,18 @@ function attachRole(req, res, next) {
 
 router.use(attachRole);
 
-function requireRoutePermission(permissionKey) {
-    return (req, res, next) => {
-        const role = req.session?.user?.role || 'viewer';
-        if (!canAccess(role, permissionKey)) {
-            return res.status(403).send('Permission denied');
-        }
-        next();
-    };
-}
-
 // Dashboard
 router.get('/', leadController.getDashboard);
 
 registerLeadApiRoutes(router, {
     leadController,
-    requireRoutePermission
+    requireLeadPolicy
 });
 
 registerLeadRoutes(router, {
     leadController,
-    requireRoutePermission
+    requireLeadPolicy,
+    requirePermissionPolicy
 });
 
 

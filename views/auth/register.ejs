@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<%= csrfToken || '' %>">
     <title>Register - Real Estate CRM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,6 +36,7 @@
                     </p>
                     <% } %>
                         <form method="POST" action="/register" class="mt-6 space-y-4">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken || '' %>">
                             <div>
                                 <label class="mb-1 block text-sm font-medium text-gray-700">Name</label>
                                 <input name="name" type="text" required

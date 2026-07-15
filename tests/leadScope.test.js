@@ -16,22 +16,22 @@ function buildReq(role, id) {
 
 test('sales role is scoped to assigned user id', () => {
     const userId = new mongoose.Types.ObjectId().toString();
-    const query = __testables.buildLeadScopeQuery(buildReq('sales', userId));
+    const query = __testables.buildLeadScopeQuery(buildReq('sales', userId), 'view');
 
     assert.equal(String(query.assignedUser), userId);
 });
 
 test('admin role is not scoped by assigned user id', () => {
     const userId = new mongoose.Types.ObjectId().toString();
-    const query = __testables.buildLeadScopeQuery(buildReq('admin', userId));
+    const query = __testables.buildLeadScopeQuery(buildReq('admin', userId), 'view');
 
     assert.deepEqual(query, {});
 });
 
-test('sales role without valid id has no scope query', () => {
-    const query = __testables.buildLeadScopeQuery(buildReq('sales', 'invalid-id'));
+test('sales role without valid id is denied for own-scope access', () => {
+    const query = __testables.buildLeadScopeQuery(buildReq('sales', 'invalid-id'), 'view');
 
-    assert.deepEqual(query, {});
+    assert.equal(query, null);
 });
 
 test('lead activity filter defaults to active records including legacy rows', () => {

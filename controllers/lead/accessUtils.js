@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
 const { canAccess } = require('../../utils/permissions');
+const { resolveLeadPolicy } = require('../../middleware/policy');
 
 function getCurrentRole(req) {
     if (req.session && req.session.user && req.session.user.role) {
@@ -24,22 +24,34 @@ function getCurrentUserName(req) {
     return String(req.session.user.name);
 }
 
-function buildLeadScopeQuery(req) {
-    const role = getCurrentRole(req).toLowerCase();
-    const userId = getCurrentUserId(req);
-
-    if (role === 'sales' && userId && mongoose.Types.ObjectId.isValid(userId)) {
-        return {
-            assignedUser: new mongoose.Types.ObjectId(userId)
-        };
+function buildLeadScopeQuery(req, action = 'view') {
+    const cachedPolicy = req.leadPolicy && req.leadPolicy[action];
+    if (cachedPolicy) {
+        return cachedPolicy.scope;
     }
 
-    return {};
+    const resolved = resolveLeadPolicy(req, action);
+    if (!resolved.allowed) {
+        return null;
+    }
+
+    req.leadPolicy = req.leadPolicy || {};
+    req.leadPolicy[action] = resolved;
+    return resolved.scope;
 }
 
 function ensurePermission(req, res, permission) {
     const role = getCurrentRole(req);
     if (!canAccess(role, permission)) {
+        res.status(403).send('You do not have permission to perform this action.');
+        return false;
+    }
+    return true;
+}
+
+function ensureLeadPolicy(req, res, action) {
+    const scope = buildLeadScopeQuery(req, action);
+    if (scope === null) {
         res.status(403).send('You do not have permission to perform this action.');
         return false;
     }
@@ -79,6 +91,7 @@ module.exports = {
     getCurrentUserName,
     buildLeadScopeQuery,
     ensurePermission,
+    ensureLeadPolicy,
     sendLeadFormSuccess,
     sendLeadFormError
 };

@@ -19,9 +19,16 @@
     "docker:down": "docker compose down",
     "docker:down:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml down",
     "normalize:phones": "node scripts/normalizeLeadPhones.js",
-    "db:drop": "node scripts/dropDatabase.js"
+    "db:drop": "node scripts/dropDatabase.js",
+    "permissions:normalize": "node scripts/normalizeRolePermissions.js",
+    "permissions:migrate-taxonomy": "node scripts/normalizeRolePermissions.js --apply",
+    "permissions:cleanup-legacy": "node scripts/cleanupLegacyPermissions.js",
+    "permissions:cleanup-legacy:apply": "node scripts/cleanupLegacyPermissions.js --apply",
+    "permissions:rollback-taxonomy": "node scripts/rollbackRolePermissionsToLegacy.js",
+    "permissions:rollback-taxonomy:apply": "node scripts/rollbackRolePermissionsToLegacy.js --apply"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",

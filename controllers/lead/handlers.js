@@ -47,14 +47,19 @@ const {
     getCurrentUserId,
     getCurrentUserName,
     buildLeadScopeQuery,
-    ensurePermission,
+    ensureLeadPolicy,
     sendLeadFormSuccess,
     sendLeadFormError
 } = require('./accessUtils');
 
 async function fetchLeadOverview(req) {
+    const leadScope = buildLeadScopeQuery(req, 'view');
+    if (!leadScope) {
+        return [];
+    }
+
     const scopeQuery = {
-        ...buildLeadScopeQuery(req),
+        ...leadScope,
         ...buildLeadActivityQuery(normalizeLeadActivityFilter(req.query.activity))
     };
 
@@ -65,7 +70,7 @@ async function fetchLeadOverview(req) {
 
 async function getDashboard(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) {
+        if (!ensureLeadPolicy(req, res, 'view')) {
             return;
         }
 
@@ -78,12 +83,13 @@ async function getDashboard(req, res) {
 
 async function getLeadsApi(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) {
+        if (!ensureLeadPolicy(req, res, 'view')) {
             return;
         }
 
+        const leadScope = buildLeadScopeQuery(req, 'view');
         const scopeQuery = {
-            ...buildLeadScopeQuery(req),
+            ...leadScope,
             ...buildLeadActivityQuery(normalizeLeadActivityFilter(req.query.activity))
         };
 
@@ -102,12 +108,12 @@ async function getLeadsApi(req, res) {
 
 async function getLeadsVersion(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) {
+        if (!ensureLeadPolicy(req, res, 'view')) {
             return;
         }
 
         const filters = getLeadListFilters(req);
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'view');
         const query = applyLeadListFilters(scopeQuery, filters);
 
         const [filteredTotal, latestLead] = await Promise.all([
@@ -132,14 +138,14 @@ async function getLeadsVersion(req, res) {
 
 async function getLeads(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) {
+        if (!ensureLeadPolicy(req, res, 'view')) {
             return;
         }
 
         const { page, limit, pageSizeOptions } = parseLeadPagination(req.query);
         const filters = getLeadListFilters(req);
 
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'view');
         const query = applyLeadListFilters(scopeQuery, filters);
         const {
             leads,
@@ -196,7 +202,7 @@ async function getLeads(req, res) {
 
 async function emailExportLeads(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) return;
+        if (!ensureLeadPolicy(req, res, 'view')) return;
 
         if (!process.env.EXPORT_EMAIL_USER || !process.env.EXPORT_EMAIL_PASS) {
             return res.redirect('/leads?emailSent=error');
@@ -213,11 +219,11 @@ async function emailExportLeads(req, res) {
 
 async function exportLeadsCsv(req, res) {
     try {
-        if (!ensurePermission(req, res, 'viewLeads')) {
+        if (!ensureLeadPolicy(req, res, 'view')) {
             return;
         }
 
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'view');
         const filters = getLeadListFilters(req);
         const query = applyLeadListFilters(scopeQuery, filters);
         const leads = await Lead.find(query)
@@ -237,7 +243,7 @@ async function exportLeadsCsv(req, res) {
 
 async function importLeadsCsv(req, res) {
     try {
-        if (!ensurePermission(req, res, 'createLead')) {
+        if (!ensureLeadPolicy(req, res, 'create')) {
             return;
         }
 
@@ -256,7 +262,7 @@ async function importLeadsCsv(req, res) {
 
 async function addLead(req, res) {
     try {
-        if (!ensurePermission(req, res, 'createLead')) {
+        if (!ensureLeadPolicy(req, res, 'create')) {
             return;
         }
 
@@ -295,7 +301,7 @@ async function addLead(req, res) {
 
 async function requestLeadInactive(req, res) {
     try {
-        if (!ensurePermission(req, res, 'updateLead')) {
+        if (!ensureLeadPolicy(req, res, 'update')) {
             return;
         }
 
@@ -303,7 +309,7 @@ async function requestLeadInactive(req, res) {
             return sendLeadFormError(req, res, 403, 'Admins can archive leads directly.');
         }
 
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'update');
         const lead = await Lead.findOne({
             ...scopeQuery,
             _id: req.params.id
@@ -321,7 +327,10 @@ async function requestLeadInactive(req, res) {
             return sendLeadFormSuccess(req, res, 'এই লিডের inactive request আগে থেকেই pending আছে।');
         }
 
-        await Lead.findByIdAndUpdate(req.params.id, {
+        await Lead.findOneAndUpdate({
+            ...scopeQuery,
+            _id: req.params.id
+        }, {
             $set: {
                 inactiveRequest: buildPendingInactiveRequestPayload({
                     requestNote: req.body.requestNote,
@@ -339,7 +348,7 @@ async function requestLeadInactive(req, res) {
 
 async function updateLead(req, res) {
     try {
-        if (!ensurePermission(req, res, 'updateLead')) {
+        if (!ensureLeadPolicy(req, res, 'update')) {
             return;
         }
 
@@ -350,7 +359,7 @@ async function updateLead(req, res) {
         }
 
         const role = String(getCurrentRole(req) || '').toLowerCase();
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'update');
 
         const existingLead = await Lead.findOne({
             ...scopeQuery,
@@ -388,7 +397,7 @@ async function updateLead(req, res) {
 
 async function bulkAssignLeads(req, res) {
     try {
-        if (!ensurePermission(req, res, 'updateLead')) {
+        if (!ensureLeadPolicy(req, res, 'update')) {
             return;
         }
 
@@ -418,7 +427,7 @@ async function bulkAssignLeads(req, res) {
             assignedUser = currentUserId;
         }
 
-        const scopeQuery = buildLeadScopeQuery(req);
+        const scopeQuery = buildLeadScopeQuery(req, 'update');
         const result = await Lead.updateMany(
             {
                 ...scopeQuery,
@@ -443,14 +452,25 @@ async function bulkAssignLeads(req, res) {
 
 async function deleteLead(req, res) {
     try {
-        if (!ensurePermission(req, res, 'deleteLead')) {
+        if (!ensureLeadPolicy(req, res, 'delete')) {
             return;
         }
 
-        const lead = await Lead.findById(req.params.id).select('inactiveRequest');
+        const scopeQuery = buildLeadScopeQuery(req, 'delete');
+
+        const lead = await Lead.findOne({
+            ...scopeQuery,
+            _id: req.params.id
+        }).select('inactiveRequest');
+        if (!lead) {
+            return sendLeadFormError(req, res, 404, 'Lead not found.');
+        }
         const hasPendingRequest = lead && lead.inactiveRequest && lead.inactiveRequest.status === 'pending';
 
-        await Lead.findByIdAndUpdate(req.params.id, {
+        await Lead.findOneAndUpdate({
+            ...scopeQuery,
+            _id: req.params.id
+        }, {
             isActive: false,
             ...(hasPendingRequest ? {
                 inactiveRequest: buildApprovedInactiveRequestPayload({
@@ -469,12 +489,15 @@ async function deleteLead(req, res) {
 
 async function rejectLeadInactiveRequest(req, res) {
     try {
-        if (!ensurePermission(req, res, 'deleteLead')) {
+        if (!ensureLeadPolicy(req, res, 'delete')) {
             return;
         }
 
+        const scopeQuery = buildLeadScopeQuery(req, 'delete');
+
         const result = await Lead.findOneAndUpdate(
             {
+                ...scopeQuery,
                 _id: req.params.id,
                 'inactiveRequest.status': 'pending'
             },
@@ -499,13 +522,21 @@ async function rejectLeadInactiveRequest(req, res) {
 
 async function restoreLead(req, res) {
     try {
-        if (!ensurePermission(req, res, 'deleteLead')) {
+        if (!ensureLeadPolicy(req, res, 'delete')) {
             return;
         }
 
-        await Lead.findByIdAndUpdate(req.params.id, {
+        const scopeQuery = buildLeadScopeQuery(req, 'delete');
+        const result = await Lead.findOneAndUpdate({
+            ...scopeQuery,
+            _id: req.params.id
+        }, {
             isActive: true
         });
+
+        if (!result) {
+            return sendLeadFormError(req, res, 404, 'Lead not found.');
+        }
 
         return sendLeadFormSuccess(req, res, 'লিড আবার active করা হয়েছে।');
     } catch (err) {
@@ -515,10 +546,24 @@ async function restoreLead(req, res) {
 
 async function addTimelineActivity(req, res) {
     try {
+        if (!ensureLeadPolicy(req, res, 'update')) {
+            return;
+        }
+
         const { leadId, activityType, note } = req.body;
-        await Lead.findByIdAndUpdate(leadId, {
+        const scopeQuery = buildLeadScopeQuery(req, 'update');
+
+        const updatedLead = await Lead.findOneAndUpdate({
+            ...scopeQuery,
+            _id: leadId
+        }, {
             $push: { timeline: { activityType, note } }
         });
+
+        if (!updatedLead) {
+            return res.status(404).send('Lead not found.');
+        }
+
         res.redirect('/leads');
     } catch (err) {
         res.status(500).send(err.message);

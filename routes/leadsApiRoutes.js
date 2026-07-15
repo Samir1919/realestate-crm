@@ -1,6 +1,6 @@
-function registerLeadApiRoutes(router, { leadController, requireRoutePermission }) {
-    router.get('/api/leads', requireRoutePermission('viewLeads'), leadController.getLeadsApi);
-    router.get('/api/leads/version', requireRoutePermission('viewLeads'), leadController.getLeadsVersion);
+function registerLeadApiRoutes(router, { leadController, requireLeadPolicy }) {
+    router.get('/api/leads', requireLeadPolicy('view'), leadController.getLeadsApi);
+    router.get('/api/leads/version', requireLeadPolicy('view'), leadController.getLeadsVersion);
 }
 
 module.exports = {
