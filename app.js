@@ -186,6 +186,8 @@ app.get('/admin/users', requirePermission('manageUsers'), async (req, res) => {
             users,
             roles,
             created: req.query.created === '1',
+            updated: req.query.updated === '1',
+            deleted: req.query.deleted === '1',
             error: req.query.error || null
         });
     } catch (err) {
@@ -241,6 +243,69 @@ app.post('/admin/users/:id/role', requirePermission('manageUsers'), async (req, 
         res.redirect('/admin/users');
     } catch (err) {
         res.status(500).send(err.message);
+    }
+});
+
+app.post('/admin/users/:id/edit', requirePermission('manageUsers'), async (req, res) => {
+    try {
+        const name = String(req.body.name || '').trim();
+        const email = String(req.body.email || '').trim().toLowerCase();
+
+        if (!name || !email) {
+            return res.redirect('/admin/users?error=Name%20and%20email%20are%20required');
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.redirect('/admin/users?error=User%20not%20found');
+        }
+
+        const duplicate = await User.findOne({
+            _id: { $ne: user._id },
+            email
+        });
+
+        if (duplicate) {
+            return res.redirect('/admin/users?error=Email%20already%20in%20use');
+        }
+
+        user.name = name;
+        user.email = email;
+        await user.save();
+
+        if (req.session.user && req.session.user.id.toString() === user._id.toString()) {
+            req.session.user.name = user.name;
+            req.session.user.email = user.email;
+        }
+
+        res.redirect('/admin/users?updated=1');
+    } catch (err) {
+        res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+    }
+});
+
+app.post('/admin/users/:id/delete', requirePermission('manageUsers'), async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.redirect('/admin/users?error=User%20not%20found');
+        }
+
+        if (req.session.user && req.session.user.id.toString() === user._id.toString()) {
+            return res.redirect('/admin/users?error=You%20cannot%20delete%20your%20own%20account');
+        }
+
+        if (user.role === 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin' });
+            if (adminCount <= 1) {
+                return res.redirect('/admin/users?error=At%20least%20one%20admin%20must%20remain');
+            }
+        }
+
+        await User.findByIdAndDelete(user._id);
+        res.redirect('/admin/users?deleted=1');
+    } catch (err) {
+        res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
     }
 });
 
