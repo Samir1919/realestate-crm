@@ -7,13 +7,13 @@
 // SESSION_SECRET=change_this_to_a_long_random_secret
 // SESSION_COOKIE_SECURE=false
 //
-// ADMIN_EMAIL=admin@asalagroupbd.com
-// ADMIN_PASSWORD=SamSam90@
+// ADMIN_EMAIL=admin@example.com
+// ADMIN_PASSWORD=replace_with_a_unique_admin_password
 // ADMIN_NAME=Admin User
 //
-// EXPORT_EMAIL_USER=icorebd@gmail.com
-// EXPORT_EMAIL_PASS=etmp lzro zjwy wwmx
-// EXPORT_EMAIL_TO=ryansamir90@gmail.com
+// EXPORT_EMAIL_USER=sender@example.com
+// EXPORT_EMAIL_PASS=replace_with_an_app_password
+// EXPORT_EMAIL_TO=recipient@example.com
 //
 // Optional in dev
 // LEAD_REFERENCE_PREFIX=LD
