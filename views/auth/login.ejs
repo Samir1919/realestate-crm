@@ -35,16 +35,16 @@
                         <%= error %>
                     </p>
                     <% } %>
-                        <form method="POST" action="/login" class="mt-6 space-y-4">
+                        <form id="loginForm" method="POST" action="/login" class="mt-6 space-y-4">
                             <input type="hidden" name="_csrf" value="<%= csrfToken || '' %>">
                             <div>
-                                <label class="mb-1 block text-sm font-medium text-gray-700">Email</label>
-                                <input name="email" type="email" required
+                                <label for="loginEmail" class="mb-1 block text-sm font-medium text-gray-700">Email</label>
+                                <input id="loginEmail" name="email" type="email" autocomplete="username" required
                                     class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-medium text-gray-700">Password</label>
-                                <input name="password" type="password" required
+                                <label for="loginPassword" class="mb-1 block text-sm font-medium text-gray-700">Password</label>
+                                <input id="loginPassword" name="password" type="password" autocomplete="current-password" required
                                     class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
                             </div>
                             <button type="submit"
@@ -54,6 +54,20 @@
             </div>
         </div>
     </div>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginSubmitButton = loginForm?.querySelector('button[type="submit"]');
+
+        loginForm?.addEventListener('keydown', (event) => {
+            const isCredentialInput = event.target?.matches('input[name="email"], input[name="password"]');
+            if (event.key !== 'Enter' || event.isComposing || !isCredentialInput) {
+                return;
+            }
+
+            event.preventDefault();
+            loginForm.requestSubmit(loginSubmitButton);
+        });
+    </script>
 </body>
 
 </html>
