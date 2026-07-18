@@ -43,6 +43,11 @@ Use this checklist to keep quality and collaboration standards consistent.
 	- Reason: Makes the controllers directory easier for humans to scan and keeps request entrypoints separate from helper logic.
 	- Impact: Future controller refactors should follow the same feature-folder split pattern instead of leaving mixed helper files at the root.
 
+- 2026-07-19: Replaced the process-local Express session store with an encrypted MongoDB-backed store using the existing CRM database connection URI by default.
+	- Reason: Login sessions must survive container restarts and must not depend on a single Node.js process before HTTPS publication.
+	- Alternatives: Redis was not introduced because the current single-node workload does not justify another stateful service. A separate MongoDB URI remains available through `SESSION_STORE_MONGO_URI` if isolation is needed later.
+	- Impact: MongoDB contains an ephemeral `sessions` collection with a 12-hour TTL index. `SESSION_SECRET` must remain stable and be at least 32 characters in production. Internal HTTP canary uses `SESSION_COOKIE_SECURE=false`; public HTTPS must use `true`.
+
 ### Decision Log Template
 
 - Date:

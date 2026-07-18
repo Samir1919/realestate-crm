@@ -29,11 +29,13 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "connect-mongo": "^6.0.0",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "libphonenumber-js": "^1.13.8",
+    "mongodb": "^7.2.0",
     "mongoose": "^9.7.3",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3"

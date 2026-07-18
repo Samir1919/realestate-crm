@@ -34,7 +34,10 @@ Internal CRM for lead management, assignment, follow-up, and admin role control.
    - `NODE_ENV=production`
    - `PORT=3000`
    - `MONGO_URI=...` (external MongoDB connection string)
-   - `SESSION_SECRET=...`
+   - `SESSION_SECRET=...` (minimum 32 characters; 64+ recommended)
+   - `SESSION_COOKIE_SECURE=false` for an internal HTTP canary, then `true` for HTTPS
+   - Optional: `SESSION_STORE_MONGO_URI=...` to use a separate session database
+   - Optional: `SESSION_COLLECTION=sessions`
 2. Start:
    `npm run docker:up`
 3. Stop:
@@ -54,6 +57,10 @@ Internal CRM for lead management, assignment, follow-up, and admin role control.
 - `npm run docker:down` - stop production compose stack
 - `npm run docker:up:local` - start app with local Mongo overlay
 - `npm run docker:down:local` - stop local Mongo overlay stack
+
+Authentication sessions are encrypted and stored in MongoDB for 12 hours. The
+MongoDB TTL index removes expired sessions. Keep `SESSION_SECRET` stable across
+container restarts; rotating it intentionally signs every user out.
 
 ## Contributing
 
