@@ -74,6 +74,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const configuredSessionCookieSecure = String(process.env.SESSION_COOKIE_SECURE || '').trim().toLowerCase();
+const sessionCookieSecure = configuredSessionCookieSecure === 'true'
+    ? true
+    : configuredSessionCookieSecure === 'false'
+        ? false
+        : process.env.NODE_ENV === 'production';
+
 app.use(session({
     name: process.env.SESSION_COOKIE_NAME || 'crm.sid',
     secret: process.env.SESSION_SECRET || 'crm-secret',
@@ -83,7 +91,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        secure: sessionCookieSecure,
         maxAge: 1000 * 60 * 60 * 12
     }
 }));
