@@ -5,6 +5,7 @@
 // PORT=3000
 // MONGO_URI=mongodb://127.0.0.1:27017/realestate_crm?directConnection=true
 // SESSION_SECRET=change_this_to_a_long_random_secret
+// SESSION_COOKIE_SECURE=false
 //
 // ADMIN_EMAIL=admin@asalagroupbd.com
 // ADMIN_PASSWORD=SamSam90@
@@ -35,6 +36,7 @@
 //
 // Use a long random secret in production (64+ chars recommended)
 // SESSION_SECRET=replace_with_a_64_plus_character_random_secret_value
+// SESSION_COOKIE_SECURE=true
 //
 // Initial admin bootstrap user
 // ADMIN_EMAIL=admin@yourdomain.com
