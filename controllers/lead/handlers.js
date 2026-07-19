@@ -2,6 +2,7 @@ const Lead = require('../../models/Lead');
 const User = require('../../models/User');
 const { canAccess } = require('../../utils/permissions');
 const { PHONE_VALIDATION_MESSAGE, normalizePhoneNumber, isValidPhoneNumber } = require('../../utils/phone');
+const { logAuditEvent } = require('../../utils/auditLogger');
 const {
     duplicateLeadMessage,
     normalizeLeadCustomerName,
@@ -24,7 +25,8 @@ const {
     buildLeadsVersion
 } = require('./queryUtils');
 const {
-    buildLeadWritePayloadFromRequest
+    buildLeadWritePayloadFromRequest,
+    buildLeadChangedFields
 } = require('./mutationUtils');
 const {
     parseLeadPagination,
@@ -290,6 +292,16 @@ async function addLead(req, res) {
         const newLead = new Lead(payload);
 
         await newLead.save();
+        await logAuditEvent(req, {
+            action: 'leads.create',
+            targetType: 'lead',
+            targetId: String(newLead._id),
+            metadata: {
+                assignedUser: newLead.assignedUser ? String(newLead.assignedUser) : '',
+                status: newLead.status,
+                leadType: newLead.leadType
+            }
+        });
         return sendLeadFormSuccess(req, res, 'নতুন লিড সফলভাবে তৈরি হয়েছে।');
     } catch (err) {
         if (err.code === 11000) {
@@ -340,6 +352,15 @@ async function requestLeadInactive(req, res) {
             }
         });
 
+        await logAuditEvent(req, {
+            action: 'leads.inactive_request',
+            targetType: 'lead',
+            targetId: String(lead._id),
+            metadata: {
+                requestedBy: getCurrentUserId(req)
+            }
+        });
+
         return sendLeadFormSuccess(req, res, 'Inactive approval request সফলভাবে পাঠানো হয়েছে।');
     } catch (err) {
         return sendLeadFormError(req, res, 500, err.message);
@@ -364,7 +385,7 @@ async function updateLead(req, res) {
         const existingLead = await Lead.findOne({
             ...scopeQuery,
             _id: req.params.id
-        }).select('isActive assignedUser');
+        }).select('customerName phone preferredLocation propertyType budgetMin budgetMax preferredSize bedrooms purpose source assignedUser leadType priority status isActive followUpDate messageNote');
 
         if (!existingLead) {
             return sendLeadFormError(req, res, 404, 'Lead not found.');
@@ -378,6 +399,8 @@ async function updateLead(req, res) {
             updatePayload.assignedUser = existingLead.assignedUser || null;
         }
 
+        const changedFields = buildLeadChangedFields(existingLead, updatePayload);
+
         await Lead.findOneAndUpdate(
             {
                 ...scopeQuery,
@@ -385,6 +408,19 @@ async function updateLead(req, res) {
             },
             updatePayload
         );
+
+        if (changedFields.length) {
+            await logAuditEvent(req, {
+                action: 'leads.update',
+                targetType: 'lead',
+                targetId: String(existingLead._id),
+                metadata: {
+                    changedFields,
+                    status: updatePayload.status,
+                    followUpDate: updatePayload.followUpDate || null
+                }
+            });
+        }
 
         return sendLeadFormSuccess(req, res, 'লিড সফলভাবে আপডেট হয়েছে।');
     } catch (err) {
@@ -444,6 +480,16 @@ async function bulkAssignLeads(req, res) {
             return sendLeadFormError(req, res, 404, 'সিলেক্ট করা লিড পাওয়া যায়নি অথবা আপনার access নেই।');
         }
 
+        await logAuditEvent(req, {
+            action: 'leads.bulk_assign',
+            targetType: 'lead',
+            metadata: {
+                assignedUser: assignedUser ? String(assignedUser) : '',
+                leadIds: leadIds.map((leadId) => String(leadId)),
+                leadCount: result.modifiedCount
+            }
+        });
+
         return sendLeadFormSuccess(req, res, `${result.modifiedCount} টি লিড assign সফল হয়েছে।`);
     } catch (err) {
         return sendLeadFormError(req, res, 500, err.message);
@@ -481,6 +527,14 @@ async function deleteLead(req, res) {
                 })
             } : {})
         });
+        await logAuditEvent(req, {
+            action: 'leads.inactivate',
+            targetType: 'lead',
+            targetId: String(lead._id),
+            metadata: {
+                approvedInactiveRequest: hasPendingRequest
+            }
+        });
         return sendLeadFormSuccess(req, res, 'লিড inactive করা হয়েছে।');
     } catch (err) {
         return sendLeadFormError(req, res, 500, err.message);
@@ -514,6 +568,15 @@ async function rejectLeadInactiveRequest(req, res) {
             return sendLeadFormError(req, res, 404, 'Pending inactive request পাওয়া যায়নি।');
         }
 
+        await logAuditEvent(req, {
+            action: 'leads.inactive_reject',
+            targetType: 'lead',
+            targetId: String(result._id),
+            metadata: {
+                reviewedBy: getCurrentUserId(req)
+            }
+        });
+
         return sendLeadFormSuccess(req, res, 'Inactive request reject করা হয়েছে।');
     } catch (err) {
         return sendLeadFormError(req, res, 500, err.message);
@@ -537,6 +600,12 @@ async function restoreLead(req, res) {
         if (!result) {
             return sendLeadFormError(req, res, 404, 'Lead not found.');
         }
+
+        await logAuditEvent(req, {
+            action: 'leads.restore',
+            targetType: 'lead',
+            targetId: String(result._id)
+        });
 
         return sendLeadFormSuccess(req, res, 'লিড আবার active করা হয়েছে।');
     } catch (err) {
@@ -563,6 +632,15 @@ async function addTimelineActivity(req, res) {
         if (!updatedLead) {
             return res.status(404).send('Lead not found.');
         }
+
+        await logAuditEvent(req, {
+            action: 'leads.note_add',
+            targetType: 'lead',
+            targetId: String(updatedLead._id),
+            metadata: {
+                activityType: String(activityType || '').trim()
+            }
+        });
 
         res.redirect('/leads');
     } catch (err) {

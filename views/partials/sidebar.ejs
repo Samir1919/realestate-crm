@@ -46,18 +46,29 @@
                                 Management</span>
                         </a>
                         <% } %>
-                            <% if (permissions && permissions.manageRoles) { %>
-                                <a href="/admin/roles" data-nav-link="/admin/roles"
+                            <% if (permissions && permissions['reports.activity.view']) { %>
+                                <a href="/activity-report" data-nav-link="/activity-report"
                                     class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
-                                    title="Roles & Permissions">
+                                    title="Activity Report">
                                     <i
-                                        class="fa-solid fa-key sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                                        class="fa-solid fa-chart-line sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
                                     <span
-                                        class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Roles
-                                        &
-                                        Permissions</span>
+                                        class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Activity
+                                        Report</span>
                                 </a>
                                 <% } %>
+                                    <% if (permissions && permissions.manageRoles) { %>
+                                        <a href="/admin/roles" data-nav-link="/admin/roles"
+                                            class="sidebar-link group flex items-center gap-4 px-3 py-2.5 rounded-lg font-medium transition whitespace-nowrap"
+                                            title="Roles & Permissions">
+                                            <i
+                                                class="fa-solid fa-key sidebar-link-icon w-5 text-center text-lg flex-shrink-0 text-gray-400"></i>
+                                            <span
+                                                class="sidebar-label text-slate-700 transition-opacity duration-200 opacity-100">Roles
+                                                &
+                                                Permissions</span>
+                                        </a>
+                                        <% } %>
         </nav>
     </div>
 

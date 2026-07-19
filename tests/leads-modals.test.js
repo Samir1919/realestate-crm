@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
+const ejs = require('ejs');
 
 function readModalSources() {
     const partialsDir = path.join(__dirname, '..', 'views', 'leads', 'partials');
@@ -50,4 +52,23 @@ test('leads modal partial includes request history view partial fields', () => {
     const source = readModalSources();
 
     assert.match(source, /id="view_requestHistorySection"/);
+});
+
+test('sales edit modal exposes inactive request action instead of direct inactive toggle', () => {
+    const source = readModalSources();
+
+    assert.match(source, /id="edit_isActive"/);
+    assert.match(source, /id="edit_inactiveRequestAction"/);
+    assert.match(source, /id="edit_requestInactiveBtn"/);
+    assert.match(source, /Request Inactive Approval/);
+});
+
+test('leads scripts partial renders parseable browser JavaScript', async () => {
+    const scriptsPath = path.join(__dirname, '..', 'views', 'leads', 'partials', 'scripts.ejs');
+    const rendered = await ejs.renderFile(scriptsPath, {});
+    const scriptSource = rendered
+        .replace(/^\s*<script>\s*/, '')
+        .replace(/\s*<\/script>\s*$/, '');
+
+    assert.doesNotThrow(() => new vm.Script(scriptSource, { filename: 'leads-scripts.js' }));
 });

@@ -38,6 +38,10 @@ function createTestApp() {
         res.status(200).json({ success: true, capability: 'users.assignrole' });
     });
 
+    app.post('/secure/reports/activity', requireCapability('reports.activity.view'), (req, res) => {
+        res.status(200).json({ success: true, capability: 'reports.activity.view' });
+    });
+
     return app;
 }
 
@@ -128,4 +132,32 @@ test('users.manage capability does not imply users.assignrole', () => {
     assert.equal(canAccess('manager', 'users.assignrole'), false);
 
     delete ROLE_PERMISSIONS.manager;
+});
+
+test('activity report capability is separate from user management', async () => {
+    await withServer(async (baseUrl) => {
+        const token = 'activity-report-token';
+
+        async function post(path, role) {
+            return fetch(`${baseUrl}${path}`, {
+                method: 'POST',
+                headers: {
+                    'x-role': role,
+                    'x-csrf-token': token,
+                    'x-session-csrf': token,
+                    'content-type': 'application/x-www-form-urlencoded'
+                },
+                body: `_csrf=${encodeURIComponent(token)}`
+            });
+        }
+
+        const adminReport = await post('/secure/reports/activity', 'admin');
+        assert.equal(adminReport.status, 200);
+
+        ROLE_PERMISSIONS.user_manager_only = ['users.manage'];
+        const userManagerOnlyReport = await post('/secure/reports/activity', 'user_manager_only');
+        assert.equal(userManagerOnlyReport.status, 403);
+
+        delete ROLE_PERMISSIONS.user_manager_only;
+    });
 });

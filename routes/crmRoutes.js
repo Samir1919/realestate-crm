@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const leadController = require('../controllers/leadController');
+const activityReportController = require('../controllers/activityReportController');
 const { requirePermissionPolicy, requireLeadPolicy } = require('../middleware/policy');
 const { registerLeadRoutes } = require('./leadsRoutes');
 const { registerLeadApiRoutes } = require('./leadsApiRoutes');
@@ -16,6 +17,8 @@ router.use(attachRole);
 
 // Dashboard
 router.get('/', leadController.getDashboard);
+router.get('/activity-report', requirePermissionPolicy('reports.activity.view'), activityReportController.getActivityReport);
+router.get('/activity-report/export.csv', requirePermissionPolicy('reports.activity.view'), activityReportController.exportActivityReportCsv);
 
 registerLeadApiRoutes(router, {
     leadController,

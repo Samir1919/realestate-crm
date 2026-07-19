@@ -20,6 +20,7 @@
     "docker:down:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml down",
     "normalize:phones": "node scripts/normalizeLeadPhones.js",
     "db:drop": "node scripts/dropDatabase.js",
+    "demo:activity": "node scripts/seedActivityDemo.js",
     "permissions:normalize": "node scripts/normalizeRolePermissions.js",
     "permissions:migrate-taxonomy": "node scripts/normalizeRolePermissions.js --apply",
     "permissions:cleanup-legacy": "node scripts/cleanupLegacyPermissions.js",

@@ -7,6 +7,7 @@ test('admin can perform all lead actions', () => {
     assert.equal(canAccess('admin', 'leads.create.all'), true);
     assert.equal(canAccess('admin', 'leads.update.all'), true);
     assert.equal(canAccess('admin', 'leads.delete.all'), true);
+    assert.equal(canAccess('admin', 'reports.activity.view'), true);
 });
 
 test('sales users have own-scope create and update but cannot delete', () => {
@@ -34,4 +35,10 @@ test('assign role is split from manage users', () => {
     assert.equal(canAccess('admin', 'users.assignRole'), true);
     assert.equal(canAccess('sales', 'users.assignRole'), false);
     assert.equal(canAccess('viewer', 'users.assignRole'), false);
+});
+
+test('activity report permission is separate from user management', () => {
+    assert.equal(canAccess('admin', 'reports.activity.view'), true);
+    assert.equal(canAccess('sales', 'reports.activity.view'), false);
+    assert.equal(canAccess('viewer', 'reports.activity.view'), false);
 });

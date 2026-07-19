@@ -9,6 +9,7 @@ const ROLE_PERMISSIONS = {
         'leads.delete.all',
         'users.manage',
         'users.assignrole',
+        'reports.activity.view',
         'roles.manage'
     ],
     sales: ['leads.view.own', 'leads.create.own', 'leads.update.own'],
@@ -26,6 +27,7 @@ const PERMISSION_CATALOG = {
     'leads.delete.own': 'Can archive or restore own assigned leads',
     'users.manage': 'Can manage users',
     'users.assignrole': 'Can assign role to users',
+    'reports.activity.view': 'Can view user activity reports',
     'roles.manage': 'Can manage roles and permissions'
 };
 

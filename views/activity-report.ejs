@@ -1,0 +1,314 @@
+<%- include('partials/header') %>
+    <%- include('partials/sidebar') %>
+
+        <div class="w-full min-w-0 overflow-x-hidden">
+            <div class="safe-container mx-auto w-full max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <%- include('partials/ui/page-header', { title: 'User Activity Report' ,
+                    subtitle: 'Daily lead work summary by user.' , action: null }) %>
+
+                    <% const selectedFilters=typeof filters !=='undefined' ? filters : { startDate: reportDate, endDate:
+                        reportDate, userId: '' , role: '' , action: '' , minScore: 0, minMeaningful: 0, lowActivityOnly:
+                        false }; %>
+                        <% const queryBase=new URLSearchParams(); if (selectedFilters.userId) queryBase.set('userId',
+                            selectedFilters.userId); if (selectedFilters.role) queryBase.set('role',
+                            selectedFilters.role); if (selectedFilters.action) queryBase.set('action',
+                            selectedFilters.action); if (selectedFilters.minScore) queryBase.set('minScore',
+                            selectedFilters.minScore); if (selectedFilters.minMeaningful) queryBase.set('minMeaningful',
+                            selectedFilters.minMeaningful); if (selectedFilters.lowActivityOnly)
+                            queryBase.set('lowActivityOnly', '1' ); const todayQuery=new URLSearchParams(queryBase);
+                            todayQuery.set('preset', 'today' ); const last7Query=new URLSearchParams(queryBase);
+                            last7Query.set('preset', '7d' ); const last30Query=new URLSearchParams(queryBase);
+                            last30Query.set('preset', '30d' ); const exportQuery=new URLSearchParams(queryBase);
+                            exportQuery.set('startDate', selectedFilters.startDate); exportQuery.set('endDate',
+                            selectedFilters.endDate); %>
+                            <form method="GET" action="/activity-report" class="crm-card-soft p-4">
+                                <div class="mb-4 flex flex-wrap gap-2">
+                                    <a href="/activity-report?<%= todayQuery.toString() %>"
+                                        class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Today</a>
+                                    <a href="/activity-report?<%= last7Query.toString() %>"
+                                        class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Last
+                                        7 Days</a>
+                                    <a href="/activity-report?<%= last30Query.toString() %>"
+                                        class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Last
+                                        30 Days</a>
+                                    <a href="/activity-report/export.csv?<%= exportQuery.toString() %>"
+                                        class="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100">
+                                        <i class="fa-solid fa-file-csv mr-2"></i> Export CSV
+                                    </a>
+                                </div>
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-7">
+                                    <div>
+                                        <label for="start-date"
+                                            class="block text-sm font-semibold text-slate-700">From</label>
+                                        <input id="start-date" name="startDate" type="date"
+                                            value="<%= selectedFilters.startDate %>"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    </div>
+                                    <div>
+                                        <label for="end-date"
+                                            class="block text-sm font-semibold text-slate-700">To</label>
+                                        <input id="end-date" name="endDate" type="date"
+                                            value="<%= selectedFilters.endDate %>"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    </div>
+                                    <div>
+                                        <label for="user-id"
+                                            class="block text-sm font-semibold text-slate-700">User</label>
+                                        <select id="user-id" name="userId"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                            <option value="">All users</option>
+                                            <% users.forEach((reportUser)=> { %>
+                                                <% const reportUserId=String(reportUser._id); %>
+                                                    <option value="<%= reportUserId %>"
+                                                        <%=selectedFilters.userId===reportUserId ? 'selected' : '' %>>
+                                                        <%= reportUser.name %> (<%= reportUser.email %>)
+                                                    </option>
+                                                    <% }) %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="role"
+                                            class="block text-sm font-semibold text-slate-700">Role</label>
+                                        <select id="role" name="role"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                            <option value="">All roles</option>
+                                            <% roleOptions.forEach((roleOption)=> { %>
+                                                <option value="<%= roleOption %>" <%=selectedFilters.role===roleOption
+                                                    ? 'selected' : '' %>><%= roleOption %>
+                                                </option>
+                                                <% }) %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="action"
+                                            class="block text-sm font-semibold text-slate-700">Action</label>
+                                        <select id="action" name="action"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                            <option value="">All actions</option>
+                                            <% actionOptions.forEach((actionOption)=> { %>
+                                                <option value="<%= actionOption.value %>"
+                                                    <%=selectedFilters.action===actionOption.value ? 'selected' : '' %>>
+                                                    <%= actionOption.label %>
+                                                </option>
+                                                <% }) %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="min-score" class="block text-sm font-semibold text-slate-700">Min
+                                            Score</label>
+                                        <input id="min-score" name="minScore" type="number" min="0"
+                                            value="<%= selectedFilters.minScore || '' %>"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    </div>
+                                    <div>
+                                        <label for="min-meaningful"
+                                            class="block text-sm font-semibold text-slate-700">Min
+                                            Meaningful</label>
+                                        <input id="min-meaningful" name="minMeaningful" type="number" min="0"
+                                            value="<%= selectedFilters.minMeaningful || '' %>"
+                                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    </div>
+                                </div>
+                                <label class="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    <input type="checkbox" name="lowActivityOnly" value="1"
+                                        <%=selectedFilters.lowActivityOnly ? 'checked' : '' %>
+                                    class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    Low activity users only
+                                </label>
+                                <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                    <a href="/activity-report"
+                                        class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                                        Reset
+                                    </a>
+                                    <button type="submit"
+                                        class="crm-btn-primary inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm">
+                                        <i class="fa-solid fa-filter mr-2"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                <div class="crm-card-soft p-5">
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total
+                                        Actions
+                                    </p>
+                                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                                        <%= totals.totalActions %>
+                                    </p>
+                                </div>
+                                <div class="crm-card-soft p-5">
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Unique
+                                        Leads
+                                        Touched</p>
+                                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                                        <%= totals.uniqueLeadsTouched %>
+                                    </p>
+                                </div>
+                                <div class="crm-card-soft p-5">
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Meaningful
+                                        Actions
+                                    </p>
+                                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                                        <%= totals.meaningfulActions %>
+                                    </p>
+                                </div>
+                                <div class="crm-card-soft p-5">
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Activity
+                                        Score
+                                    </p>
+                                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                                        <%= totals.score %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <% const trendRows=typeof trend !=='undefined' ? trend : []; const maxTrendScore=Math.max(1,
+                                ...trendRows.map((item)=> item.score)); %>
+                                <section class="crm-card-soft overflow-hidden">
+                                    <div class="border-b border-slate-100 px-5 py-4">
+                                        <h2 class="text-lg font-bold text-slate-900">Daily Trend</h2>
+                                    </div>
+                                    <div class="space-y-3 p-5">
+                                        <% if (!trendRows.length) { %>
+                                            <p class="text-sm font-medium text-slate-500">No trend data to show.</p>
+                                            <% } %>
+                                                <% trendRows.forEach((item)=> { %>
+                                                    <div
+                                                        class="grid grid-cols-1 gap-2 sm:grid-cols-[7rem_1fr_10rem] sm:items-center">
+                                                        <div class="text-sm font-semibold text-slate-700">
+                                                            <%= item.date %>
+                                                        </div>
+                                                        <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+                                                            <div class="h-full rounded-full bg-blue-600"
+                                                                style="width: <%= Math.max(4, Math.round((item.score / maxTrendScore) * 100)) %>%">
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-sm font-semibold text-slate-600 sm:text-right">
+                                                            <%= item.score %> score / <%= item.totalActions %> actions
+                                                        </div>
+                                                    </div>
+                                                    <% }) %>
+                                    </div>
+                                </section>
+
+                                <section class="crm-card-soft overflow-hidden">
+                                    <div class="border-b border-slate-100 px-5 py-4">
+                                        <h2 class="text-lg font-bold text-slate-900">User Summary</h2>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-slate-100 text-sm">
+                                            <thead
+                                                class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                <tr>
+                                                    <th class="px-5 py-3">User</th>
+                                                    <th class="px-5 py-3">Role</th>
+                                                    <th class="px-5 py-3 text-right">Actions</th>
+                                                    <th class="px-5 py-3 text-right">Unique Leads</th>
+                                                    <th class="px-5 py-3 text-right">Meaningful</th>
+                                                    <th class="px-5 py-3 text-right">Score</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 bg-white">
+                                                <% if (!summaries.length) { %>
+                                                    <tr>
+                                                        <td colspan="6"
+                                                            class="px-5 py-8 text-center text-sm font-medium text-slate-500">
+                                                            No
+                                                            lead
+                                                            activity found for this date.</td>
+                                                    </tr>
+                                                    <% } %>
+                                                        <% summaries.forEach((summary)=> { %>
+                                                            <tr class="hover:bg-slate-50">
+                                                                <td class="px-5 py-4 font-semibold text-slate-900">
+                                                                    <%= summary.actorEmail %>
+                                                                </td>
+                                                                <td class="px-5 py-4 text-slate-600">
+                                                                    <%= summary.actorRole || '-' %>
+                                                                </td>
+                                                                <td
+                                                                    class="px-5 py-4 text-right font-semibold text-slate-900">
+                                                                    <%= summary.totalActions %>
+                                                                </td>
+                                                                <td
+                                                                    class="px-5 py-4 text-right font-semibold text-slate-900">
+                                                                    <%= summary.uniqueLeadsTouched %>
+                                                                </td>
+                                                                <td
+                                                                    class="px-5 py-4 text-right font-semibold text-slate-900">
+                                                                    <%= summary.meaningfulActions %>
+                                                                </td>
+                                                                <td
+                                                                    class="px-5 py-4 text-right font-bold text-blue-700">
+                                                                    <%= summary.score %>
+                                                                </td>
+                                                            </tr>
+                                                            <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+
+                                <section class="crm-card-soft overflow-hidden">
+                                    <div class="border-b border-slate-100 px-5 py-4">
+                                        <h2 class="text-lg font-bold text-slate-900">Recent Lead Activity</h2>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-slate-100 text-sm">
+                                            <thead
+                                                class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                <tr>
+                                                    <th class="px-5 py-3">Time</th>
+                                                    <th class="px-5 py-3">User</th>
+                                                    <th class="px-5 py-3">Action</th>
+                                                    <th class="px-5 py-3">Lead</th>
+                                                    <th class="px-5 py-3">Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 bg-white">
+                                                <% if (!recentEvents.length) { %>
+                                                    <tr>
+                                                        <td colspan="5"
+                                                            class="px-5 py-8 text-center text-sm font-medium text-slate-500">
+                                                            No
+                                                            events to show.</td>
+                                                    </tr>
+                                                    <% } %>
+                                                        <% recentEvents.forEach((event)=> { %>
+                                                            <tr class="hover:bg-slate-50">
+                                                                <td class="whitespace-nowrap px-5 py-4 text-slate-600">
+                                                                    <%= new
+                                                                        Date(event.createdAt).toLocaleString('en-GB', {
+                                                                        timeZone: 'Asia/Dhaka' }) %>
+                                                                </td>
+                                                                <td class="px-5 py-4 font-semibold text-slate-900">
+                                                                    <%= event.actorEmail || 'unknown' %>
+                                                                </td>
+                                                                <td class="px-5 py-4 text-slate-700">
+                                                                    <%= actionLabels[event.action] || event.action %>
+                                                                </td>
+                                                                <td class="px-5 py-4 text-slate-600">
+                                                                    <%= event.targetId || '-' %>
+                                                                </td>
+                                                                <td class="px-5 py-4 text-slate-600">
+                                                                    <% const changedFields=Array.isArray(event.metadata
+                                                                        && event.metadata.changedFields) ?
+                                                                        event.metadata.changedFields : []; %>
+                                                                        <% if (changedFields.length) { %>
+                                                                            <%= changedFields.join(', ') %>
+                                                <% } else if (event.metadata && event.metadata.leadCount) { %>
+                                                    <%= event.metadata.leadCount %> leads
+                                                <% } else { %>
+                                                    -
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+            </div>
+        </div>
+
+        <%- include('partials/footer') %>

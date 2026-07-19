@@ -18,6 +18,42 @@ function toNumberOrZero(value) {
     return value ? Number(value) : 0;
 }
 
+function normalizeComparableValue(value, fieldName) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    if (fieldName === 'followUpDate') {
+        if (value instanceof Date) {
+            return Number.isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10);
+        }
+
+        return String(value).trim().slice(0, 10);
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+    }
+
+    if (value && typeof value === 'object' && typeof value.toString === 'function') {
+        return String(value.toString()).trim();
+    }
+
+    return String(value).trim();
+}
+
+function buildLeadChangedFields(existingLead, updatePayload) {
+    if (!existingLead || !updatePayload) {
+        return [];
+    }
+
+    return Object.keys(updatePayload).filter((fieldName) => {
+        const previousValue = normalizeComparableValue(existingLead[fieldName], fieldName);
+        const nextValue = normalizeComparableValue(updatePayload[fieldName], fieldName);
+        return previousValue !== nextValue;
+    });
+}
+
 function buildLeadWritePayloadFromRequest(body, normalizedPhone) {
     const normalizedPurpose = normalizeTrimmedValue(body.purpose);
     const normalizedPropertyType = normalizeTrimmedValue(body.propertyType);
@@ -91,5 +127,6 @@ async function resolveAssignedUserForCsvRow(rowData, assignedUserEmailCache, fin
 module.exports = {
     buildLeadWritePayloadFromRequest,
     buildLeadWritePayloadFromCsvRow,
-    resolveAssignedUserForCsvRow
+    resolveAssignedUserForCsvRow,
+    buildLeadChangedFields
 };
