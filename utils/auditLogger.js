@@ -11,11 +11,6 @@ function resolveActorId(req) {
 }
 
 function resolveIpAddress(req) {
-    const forwardedFor = String(req.headers['x-forwarded-for'] || '').trim();
-    if (forwardedFor) {
-        return forwardedFor.split(',')[0].trim();
-    }
-
     return String(req.ip || req.socket?.remoteAddress || '').trim();
 }
 
@@ -43,5 +38,8 @@ async function logAuditEvent(req, event) {
 }
 
 module.exports = {
-    logAuditEvent
+    logAuditEvent,
+    __testables: {
+        resolveIpAddress
+    }
 };

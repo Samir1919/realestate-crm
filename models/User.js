@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { validateNewPassword } = require('../utils/passwordPolicy');
 
 const SALT_ROUNDS = 12;
 
@@ -16,9 +17,15 @@ userSchema.pre('save', async function hashPasswordBeforeSave() {
         return;
     }
 
-    const plainPassword = String(this.password || '').trim();
-    if (plainPassword.startsWith('$2')) {
+    const plainPassword = String(this.password || '');
+    const isExistingBcryptUpgrade = !this.isNew && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(plainPassword);
+    if (isExistingBcryptUpgrade) {
         return;
+    }
+
+    const validation = validateNewPassword(plainPassword);
+    if (!validation.valid) {
+        throw new Error(validation.message);
     }
 
     this.password = await bcrypt.hash(plainPassword, SALT_ROUNDS);

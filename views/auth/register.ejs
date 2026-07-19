@@ -49,9 +49,11 @@
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-medium text-gray-700">Password</label>
-                                <input name="password" type="password" required
+                                <input name="password" type="password" minlength="15" maxlength="128"
+                                    autocomplete="new-password" required
                                     class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
                             </div>
+                            <p class="text-xs text-slate-500">Use 15–128 characters. Passphrases and password managers are supported.</p>
                             <p class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">Default
                                 role: Viewer</p>
                             <button type="submit"

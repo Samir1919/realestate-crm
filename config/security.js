@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const helmet = require('helmet');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
+const { logAuditEvent } = require('../utils/auditLogger');
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
@@ -19,10 +20,22 @@ function createSecurityHeaders({ hstsEnabled = process.env.SECURITY_HSTS_ENABLED
     });
 }
 
-function renderRateLimitResponse(req, res) {
-    return res.status(429).render('auth/login', {
-        error: 'Too many login attempts. Please try again later.'
-    });
+function createRateLimitResponseHandler(auditLogger) {
+    return function renderRateLimitResponse(req, res) {
+        void auditLogger(req, {
+            action: 'auth.rate_limited',
+            success: false,
+            targetType: 'user',
+            metadata: {
+                attemptedEmail: String(req.body?.email || '').trim().toLowerCase(),
+                reason: 'login_attempt_limit'
+            }
+        });
+
+        return res.status(429).render('auth/login', {
+            error: 'Too many login attempts. Please try again later.'
+        });
+    };
 }
 
 function accountAndIpKey(req) {
@@ -31,13 +44,13 @@ function accountAndIpKey(req) {
     return `${ipKeyGenerator(req.ip)}:${emailHash}`;
 }
 
-function createLoginRateLimiters() {
+function createLoginRateLimiters({ auditLogger = logAuditEvent } = {}) {
     const commonOptions = {
         windowMs: LOGIN_WINDOW_MS,
         standardHeaders: 'draft-8',
         legacyHeaders: false,
         skipSuccessfulRequests: true,
-        handler: renderRateLimitResponse
+        handler: createRateLimitResponseHandler(auditLogger)
     };
 
     return [

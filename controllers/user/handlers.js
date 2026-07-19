@@ -5,6 +5,10 @@ const {
     refreshPermissionsCache
 } = require('../../utils/permissions');
 const { logAuditEvent } = require('../../utils/auditLogger');
+const { getDeletionDenial, getRoleChangeDenial } = require('../../utils/adminAccountPolicy');
+const { validateNewPassword } = require('../../utils/passwordPolicy');
+
+const GENERIC_USER_ERROR = 'Unable to complete the request. Please try again.';
 
 function getActorSummary(req) {
     return {
@@ -22,10 +26,15 @@ async function registerUser(req, res) {
     try {
         const name = String(req.body.name || '').trim();
         const email = String(req.body.email || '').trim().toLowerCase();
-        const password = String(req.body.password || '').trim();
+        const password = String(req.body.password || '');
 
         if (!name || !email || !password) {
             return res.status(400).render('auth/register', { error: 'Name, email, and password are required' });
+        }
+
+        const passwordValidation = validateNewPassword(password);
+        if (!passwordValidation.valid) {
+            return res.status(400).render('auth/register', { error: passwordValidation.message });
         }
 
         const existing = await User.findOne({ email });
@@ -65,7 +74,7 @@ async function registerUser(req, res) {
             }
         });
 
-        return res.status(500).render('auth/register', { error: err.message });
+        return res.status(500).render('auth/register', { error: GENERIC_USER_ERROR });
     }
 }
 
@@ -83,7 +92,7 @@ async function renderUsersPage(req, res) {
             error: req.query.error || null
         });
     } catch (err) {
-        return res.status(500).send(err.message);
+        return res.status(500).send(GENERIC_USER_ERROR);
     }
 }
 
@@ -94,10 +103,15 @@ async function createUser(req, res) {
 
         const name = String(req.body.name || '').trim();
         const email = String(req.body.email || '').trim().toLowerCase();
-        const password = String(req.body.password || '').trim();
+        const password = String(req.body.password || '');
 
         if (!name || !email || !password) {
             return res.redirect('/admin/users?error=Name%2C%20email%2C%20and%20password%20are%20required');
+        }
+
+        const passwordValidation = validateNewPassword(password);
+        if (!passwordValidation.valid) {
+            return res.redirect(`/admin/users?error=${encodeURIComponent(passwordValidation.message)}`);
         }
 
         const existing = await User.findOne({ email });
@@ -137,7 +151,7 @@ async function createUser(req, res) {
             }
         });
 
-        return res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+        return res.redirect(`/admin/users?error=${encodeURIComponent(GENERIC_USER_ERROR)}`);
     }
 }
 
@@ -149,15 +163,44 @@ async function assignUserRole(req, res) {
             return res.status(400).send('Invalid role');
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
-            { role: roleName },
-            { returnDocument: 'after' }
-        );
-
-        if (!updatedUser) {
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
             return res.status(404).send('User not found');
         }
+
+        const adminCount = targetUser.role === 'admin' && roleName !== 'admin'
+            ? await User.countDocuments({ role: 'admin' })
+            : 0;
+        const denialReason = getRoleChangeDenial({
+            actorId: req.session?.user?.id,
+            targetId: targetUser._id,
+            currentRole: targetUser.role,
+            nextRole: roleName,
+            adminCount
+        });
+
+        if (denialReason) {
+            await logAuditEvent(req, {
+                action: 'users.assign_role',
+                success: false,
+                targetType: 'user',
+                targetId: String(targetUser._id),
+                metadata: {
+                    attemptedRole: roleName,
+                    targetEmail: targetUser.email,
+                    reason: denialReason,
+                    ...getActorSummary(req)
+                }
+            });
+            const message = denialReason === 'self_demotion'
+                ? 'You cannot demote your own admin account.'
+                : 'At least one admin must remain.';
+            return res.redirect(`/admin/users?error=${encodeURIComponent(message)}`);
+        }
+
+        targetUser.role = roleName;
+        await targetUser.save();
+        const updatedUser = targetUser;
 
         if (req.session?.user?.id?.toString() === updatedUser._id.toString()) {
             req.session.user.role = updatedUser.role;
@@ -189,7 +232,7 @@ async function assignUserRole(req, res) {
             }
         });
 
-        return res.status(500).send(err.message);
+        return res.status(500).send(GENERIC_USER_ERROR);
     }
 }
 
@@ -250,7 +293,7 @@ async function editUser(req, res) {
             }
         });
 
-        return res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+        return res.redirect(`/admin/users?error=${encodeURIComponent(GENERIC_USER_ERROR)}`);
     }
 }
 
@@ -261,15 +304,33 @@ async function deleteUser(req, res) {
             return res.redirect('/admin/users?error=User%20not%20found');
         }
 
-        if (req.session?.user && req.session.user.id.toString() === user._id.toString()) {
-            return res.redirect('/admin/users?error=You%20cannot%20delete%20your%20own%20account');
-        }
+        const adminCount = user.role === 'admin'
+            ? await User.countDocuments({ role: 'admin' })
+            : 0;
+        const denialReason = getDeletionDenial({
+            actorId: req.session?.user?.id,
+            targetId: user._id,
+            targetRole: user.role,
+            adminCount
+        });
 
-        if (user.role === 'admin') {
-            const adminCount = await User.countDocuments({ role: 'admin' });
-            if (adminCount <= 1) {
-                return res.redirect('/admin/users?error=At%20least%20one%20admin%20must%20remain');
-            }
+        if (denialReason) {
+            await logAuditEvent(req, {
+                action: 'users.delete',
+                success: false,
+                targetType: 'user',
+                targetId: String(user._id),
+                metadata: {
+                    targetEmail: user.email,
+                    targetRole: user.role,
+                    reason: denialReason,
+                    ...getActorSummary(req)
+                }
+            });
+            const message = denialReason === 'self_deletion'
+                ? 'You cannot delete your own account.'
+                : 'At least one admin must remain.';
+            return res.redirect(`/admin/users?error=${encodeURIComponent(message)}`);
         }
 
         await User.findByIdAndDelete(user._id);
@@ -299,7 +360,7 @@ async function deleteUser(req, res) {
             }
         });
 
-        return res.redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+        return res.redirect(`/admin/users?error=${encodeURIComponent(GENERIC_USER_ERROR)}`);
     }
 }
 
