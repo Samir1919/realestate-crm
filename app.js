@@ -5,6 +5,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const connectDB = require('./config/db');
 const { createSessionConfig } = require('./config/session');
+const { createLoginRateLimiters, createSecurityHeaders } = require('./config/security');
 const crmRoutes = require('./routes/crmRoutes');
 const adminUsersRoutes = require('./routes/adminUsersRoutes');
 const User = require('./models/User');
@@ -25,6 +26,7 @@ const {
 } = require('./utils/permissions');
 
 const app = express();
+const loginRateLimiters = createLoginRateLimiters();
 
 // Database Connection
 connectDB();
@@ -72,6 +74,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares
+app.use(createSecurityHeaders());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -100,7 +103,7 @@ app.get('/login', (req, res) => {
     res.render('auth/login', { error: null });
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', ...loginRateLimiters, async (req, res) => {
     try {
         const email = String(req.body.email || '').trim().toLowerCase();
         const password = String(req.body.password || '');
