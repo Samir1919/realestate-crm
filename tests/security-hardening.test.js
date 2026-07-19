@@ -7,6 +7,12 @@ const {
     createSecurityHeaders
 } = require('../config/security');
 
+const noOpAuditLogger = async () => {};
+
+function createTestLoginRateLimiters() {
+    return createLoginRateLimiters({ auditLogger: noOpAuditLogger });
+}
+
 async function withServer(configure, run) {
     const app = express();
     configure(app);
@@ -62,6 +68,7 @@ test('account limiter keys hash normalized emails and include normalized IP', ()
 });
 
 test('sixth failed login for one account and IP is rate limited', async () => {
+    const auditEvents = [];
     await withServer((app) => {
         app.set('view engine', 'ejs');
         app.set('views', `${__dirname}/../views`);
@@ -70,7 +77,9 @@ test('sixth failed login for one account and IP is rate limited', async () => {
             res.locals.csrfToken = 'test-csrf-token';
             next();
         });
-        app.post('/login', ...createLoginRateLimiters(), (req, res) => {
+        app.post('/login', ...createLoginRateLimiters({
+            auditLogger: async (req, event) => auditEvents.push(event)
+        }), (req, res) => {
             res.status(401).render('auth/login', { error: 'Invalid credentials' });
         });
     }, async (baseUrl) => {
@@ -92,6 +101,9 @@ test('sixth failed login for one account and IP is rate limited', async () => {
         assert.equal(blocked.status, 429);
         assert.ok(Number(blocked.headers.get('retry-after')) > 0);
         assert.match(await blocked.text(), /Too many login attempts/);
+        assert.equal(auditEvents.length, 1);
+        assert.equal(auditEvents[0].action, 'auth.rate_limited');
+        assert.equal(auditEvents[0].success, false);
     });
 });
 
@@ -104,7 +116,7 @@ test('twenty-sixth failed login from one IP is rate limited across accounts', as
             res.locals.csrfToken = 'test-csrf-token';
             next();
         });
-        app.post('/login', ...createLoginRateLimiters(), (req, res) => {
+        app.post('/login', ...createTestLoginRateLimiters(), (req, res) => {
             res.status(401).send('invalid');
         });
     }, async (baseUrl) => {
@@ -132,7 +144,7 @@ test('twenty-sixth failed login from one IP is rate limited across accounts', as
 test('successful logins do not consume the failure quota', async () => {
     await withServer((app) => {
         app.use(express.urlencoded({ extended: true }));
-        app.post('/login', ...createLoginRateLimiters(), (req, res) => {
+        app.post('/login', ...createTestLoginRateLimiters(), (req, res) => {
             if (req.body.password === 'correct') {
                 return res.redirect(303, '/ok');
             }

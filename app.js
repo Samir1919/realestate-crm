@@ -42,7 +42,10 @@ async function ensureInitialAdminUser() {
     }
 
     const adminEmail = String(process.env.ADMIN_EMAIL || 'admin@crm.com').trim().toLowerCase();
-    const adminPassword = String(process.env.ADMIN_PASSWORD || '123456').trim();
+    const developmentAdminPassword = process.env.NODE_ENV === 'production'
+        ? ''
+        : 'development-only-admin-password';
+    const adminPassword = String(process.env.ADMIN_PASSWORD || developmentAdminPassword);
     const adminName = String(process.env.ADMIN_NAME || 'Admin User').trim() || 'Admin User';
 
     const configuredUser = await User.findOne({ email: adminEmail });
@@ -170,7 +173,7 @@ app.post('/login', ...loginRateLimiters, async (req, res) => {
                 error: err.message
             }
         });
-        res.status(500).render('auth/login', { error: err.message });
+        res.status(500).render('auth/login', { error: 'Unable to sign in. Please try again.' });
     }
 });
 
@@ -208,12 +211,12 @@ if (process.env.NODE_ENV !== 'production') {
                 await User.create({
                     name: 'Admin User',
                     email: 'admin@crm.com',
-                    password: '123456',
+                    password: 'development-only-admin-password',
                     role: 'admin'
                 });
             }
 
-            res.send('Seeded admin account: admin@crm.com / 123456');
+            res.send('Seeded development admin account');
         } catch (err) {
             res.status(500).send(err.message);
         }
