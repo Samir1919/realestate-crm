@@ -54,6 +54,27 @@ function buildLeadChangedFields(existingLead, updatePayload) {
     });
 }
 
+function buildLeadFieldChanges(existingLead, updatePayload, changedFields) {
+    const reportableFields = new Set([
+        'assignedUser',
+        'followUpDate',
+        'isActive',
+        'leadType',
+        'priority',
+        'status'
+    ]);
+
+    return (Array.isArray(changedFields) ? changedFields : [])
+        .filter((fieldName) => reportableFields.has(fieldName))
+        .reduce((changes, fieldName) => {
+            changes[fieldName] = {
+                from: normalizeComparableValue(existingLead[fieldName], fieldName),
+                to: normalizeComparableValue(updatePayload[fieldName], fieldName)
+            };
+            return changes;
+        }, {});
+}
+
 function buildLeadWritePayloadFromRequest(body, normalizedPhone) {
     const normalizedPurpose = normalizeTrimmedValue(body.purpose);
     const normalizedPropertyType = normalizeTrimmedValue(body.propertyType);
@@ -128,5 +149,6 @@ module.exports = {
     buildLeadWritePayloadFromRequest,
     buildLeadWritePayloadFromCsvRow,
     resolveAssignedUserForCsvRow,
-    buildLeadChangedFields
+    buildLeadChangedFields,
+    buildLeadFieldChanges
 };

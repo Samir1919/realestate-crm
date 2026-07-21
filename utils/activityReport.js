@@ -29,6 +29,26 @@ const MEANINGFUL_UPDATE_FIELDS = new Set([
     'assignedUser'
 ]);
 
+const ACTIVITY_FIELD_LABELS = {
+    assignedUser: 'employee',
+    bedrooms: 'bedrooms',
+    budgetMax: 'maximum budget',
+    budgetMin: 'minimum budget',
+    customerName: 'customer name',
+    followUpDate: 'follow-up date',
+    isActive: 'activity state',
+    leadType: 'lead type',
+    messageNote: 'latest note',
+    phone: 'phone',
+    preferredLocation: 'location',
+    preferredSize: 'preferred size',
+    priority: 'priority',
+    propertyType: 'property type',
+    purpose: 'purpose',
+    source: 'source',
+    status: 'status'
+};
+
 function formatDhakaDate(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Dhaka',
@@ -156,6 +176,93 @@ function getEventLeadIds(event) {
     });
 
     return ids;
+}
+
+function humanizeActivityField(fieldName) {
+    const normalizedField = String(fieldName || '').trim();
+    if (ACTIVITY_FIELD_LABELS[normalizedField]) {
+        return ACTIVITY_FIELD_LABELS[normalizedField];
+    }
+
+    return normalizedField
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/[_-]+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+function formatActivityFollowUpDate(value) {
+    if (!value) return '';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return date.toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' });
+}
+
+function formatActivityChangeValue(fieldName, value, userNamesById) {
+    if (value === '' || value === null || value === undefined) return 'None';
+    if (fieldName === 'assignedUser') return userNamesById.get(String(value)) || 'Unknown employee';
+    if (fieldName === 'followUpDate') return formatActivityFollowUpDate(value) || 'None';
+    if (fieldName === 'isActive') return String(value) === 'true' ? 'Active' : 'Inactive';
+    return String(value);
+}
+
+function describeActivityEvent(event, userNamesById = new Map()) {
+    const metadata = event?.metadata || {};
+    const assignedUserId = String(metadata.assignedUser || '').trim();
+    const assignedUserName = assignedUserId ? (userNamesById.get(assignedUserId) || 'Unknown employee') : 'Unassigned';
+
+    if (event.action === 'leads.create') {
+        const details = [];
+        if (metadata.status) details.push(`Status: ${metadata.status}`);
+        if (metadata.leadType) details.push(`Type: ${String(metadata.leadType).toUpperCase()}`);
+        if (assignedUserId) details.push(`Employee: ${assignedUserName}`);
+        return details.length ? details.join(' · ') : 'Lead created';
+    }
+
+    if (event.action === 'leads.update') {
+        const changedFields = Array.isArray(metadata.changedFields) ? metadata.changedFields : [];
+        const fieldLabels = changedFields.map(humanizeActivityField).filter(Boolean);
+        const details = fieldLabels.length ? `${fieldLabels.join(', ')} updated` : 'Lead details updated';
+        const fieldChanges = metadata.fieldChanges && typeof metadata.fieldChanges === 'object'
+            ? metadata.fieldChanges
+            : {};
+        const changeDescriptions = Object.entries(fieldChanges).map(([fieldName, change]) => {
+            const from = formatActivityChangeValue(fieldName, change?.from, userNamesById);
+            const to = formatActivityChangeValue(fieldName, change?.to, userNamesById);
+            return `${humanizeActivityField(fieldName)}: ${from} → ${to}`;
+        });
+        if (changeDescriptions.length) return `${details} · ${changeDescriptions.join(' · ')}`;
+        const values = [];
+        if (changedFields.includes('status') && metadata.status) values.push(`Status: ${metadata.status}`);
+        const followUpDate = changedFields.includes('followUpDate')
+            ? formatActivityFollowUpDate(metadata.followUpDate)
+            : '';
+        if (followUpDate) values.push(`Follow-up: ${followUpDate}`);
+        return values.length ? `${details} · ${values.join(' · ')}` : details;
+    }
+
+    if (event.action === 'leads.note_add') {
+        const activityType = String(metadata.activityType || '').trim();
+        return activityType ? `${activityType} note added` : 'Timeline note added';
+    }
+
+    if (event.action === 'leads.bulk_assign') {
+        const leadCount = Math.max(0, Number(metadata.leadCount || 0));
+        return `${leadCount} ${leadCount === 1 ? 'lead' : 'leads'} assigned to ${assignedUserName}`;
+    }
+
+    if (event.action === 'leads.inactive_request') return 'Inactive request submitted for review';
+    if (event.action === 'leads.inactivate') {
+        return metadata.approvedInactiveRequest
+            ? 'Inactive request approved and lead inactivated'
+            : 'Lead inactivated directly';
+    }
+    if (event.action === 'leads.inactive_reject') return 'Inactive request rejected';
+    if (event.action === 'leads.restore') return 'Lead restored to active';
+
+    return ACTION_LABELS[event.action] || String(event.action || 'Activity recorded');
 }
 
 function isMeaningfulEvent(event) {
@@ -348,6 +455,7 @@ module.exports = {
     buildDailyActivitySummary,
     buildEmptyActivitySummary,
     createActivitySummaryCsv,
+    describeActivityEvent,
     formatDhakaDate,
     getActivityPresetRange,
     getDhakaDateRange,

@@ -1,0 +1,25 @@
+<%
+const updatedAt = lead && lead.updatedAt ? new Date(lead.updatedAt) : null;
+const hasValidUpdatedAt = updatedAt && !Number.isNaN(updatedAt.getTime());
+const updatedDate = hasValidUpdatedAt ? updatedAt.toLocaleDateString('en-GB', {
+    timeZone: 'Asia/Dhaka'
+}) : '—';
+const updatedTime = hasValidUpdatedAt ? updatedAt.toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Dhaka'
+}) : '';
+%>
+<% if (compact) { %>
+    <div class="flex items-center justify-between gap-3 text-xs">
+        <span class="font-medium text-slate-500">Last Updated</span>
+        <span class="text-right text-slate-600">
+            <%= updatedDate %><% if (updatedTime) { %>, <%= updatedTime %><% } %>
+        </span>
+    </div>
+<% } else { %>
+    <div class="text-xs text-slate-600">
+        <span class="block font-medium text-slate-700"><%= updatedDate %></span>
+        <% if (updatedTime) { %>
+            <span class="mt-0.5 block text-slate-500"><%= updatedTime %></span>
+        <% } %>
+    </div>
+<% } %>

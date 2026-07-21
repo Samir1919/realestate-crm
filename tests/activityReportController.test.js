@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
+const Lead = require('../models/Lead');
 const User = require('../models/User');
 const activityReportController = require('../controllers/activityReportController');
 
@@ -31,18 +32,38 @@ function makeUserFindChain(rows) {
     };
 }
 
+function makeLeadFindChain(rows) {
+    return {
+        select() {
+            return this;
+        },
+        lean() {
+            return Promise.resolve(rows);
+        }
+    };
+}
+
 async function withDemoActivityData(run) {
     const originalAuditFind = AuditLog.find;
+    const originalLeadFind = Lead.find;
     const originalUserFind = User.find;
     const originalUserDistinct = User.distinct;
 
     const salesUserId = new mongoose.Types.ObjectId();
     const quietUserId = new mongoose.Types.ObjectId();
     const adminUserId = new mongoose.Types.ObjectId();
+    const leadOneId = new mongoose.Types.ObjectId();
+    const leadTwoId = new mongoose.Types.ObjectId();
+    const leadThreeId = new mongoose.Types.ObjectId();
     const demoUsers = [
         { _id: salesUserId, name: 'Demo Sales Active', email: 'active.sales@example.com', role: 'sales' },
         { _id: quietUserId, name: 'Demo Sales Quiet', email: 'quiet.sales@example.com', role: 'sales' },
         { _id: adminUserId, name: 'Demo Admin', email: 'admin@example.com', role: 'admin' }
+    ];
+    const demoLeads = [
+        { _id: leadOneId, referenceNumber: 'LD-000001', customerName: 'Demo Customer One', phone: '+8801700000001' },
+        { _id: leadTwoId, referenceNumber: 'LD-000002', customerName: 'Demo Customer Two', phone: '+8801700000002' },
+        { _id: leadThreeId, referenceNumber: 'LD-000003', customerName: 'Demo Customer Three', phone: '+8801700000003' }
     ];
     const demoEvents = [
         {
@@ -51,7 +72,7 @@ async function withDemoActivityData(run) {
             actorEmail: 'active.sales@example.com',
             actorRole: 'sales',
             targetType: 'lead',
-            targetId: 'lead-1',
+            targetId: String(leadOneId),
             success: true,
             metadata: {},
             createdAt: new Date('2026-07-18T18:10:00.000Z')
@@ -62,7 +83,7 @@ async function withDemoActivityData(run) {
             actorEmail: 'active.sales@example.com',
             actorRole: 'sales',
             targetType: 'lead',
-            targetId: 'lead-1',
+            targetId: String(leadOneId),
             success: true,
             metadata: { changedFields: ['status', 'followUpDate'] },
             createdAt: new Date('2026-07-18T19:00:00.000Z')
@@ -75,7 +96,11 @@ async function withDemoActivityData(run) {
             targetType: 'lead',
             targetId: '',
             success: true,
-            metadata: { leadIds: ['lead-2', 'lead-3'], leadCount: 2 },
+            metadata: {
+                assignedUser: String(salesUserId),
+                leadIds: [String(leadTwoId), String(leadThreeId)],
+                leadCount: 2
+            },
             createdAt: new Date('2026-07-19T08:00:00.000Z')
         }
     ];
@@ -93,6 +118,7 @@ async function withDemoActivityData(run) {
         });
         return makeLeanSortChain(filteredEvents);
     };
+    Lead.find = () => makeLeadFindChain(demoLeads);
     User.find = () => makeUserFindChain(demoUsers);
     User.distinct = async () => ['sales', 'admin'];
 
@@ -100,6 +126,7 @@ async function withDemoActivityData(run) {
         await run({ salesUserId, quietUserId, adminUserId, getLastAuditQuery: () => lastAuditQuery });
     } finally {
         AuditLog.find = originalAuditFind;
+        Lead.find = originalLeadFind;
         User.find = originalUserFind;
         User.distinct = originalUserDistinct;
     }
@@ -119,6 +146,9 @@ test('activity report builds totals from demo users and lead work events', async
         assert.equal(report.totals.score, 10);
         assert.equal(report.trend.length, 1);
         assert.equal(report.trend[0].score, 10);
+        assert.equal(report.recentEvents[0].lead.referenceNumber, 'LD-000001');
+        assert.equal(report.recentEvents[0].actorName, 'Demo Sales Active');
+        assert.equal(report.recentActivityPagination.totalEvents, 3);
 
         const activeSales = report.summaries.find((summary) => summary.actorEmail === 'active.sales@example.com');
         const quietSales = report.summaries.find((summary) => summary.actorEmail === 'quiet.sales@example.com');
@@ -221,5 +251,8 @@ test('activity report page renders with demo report data', async () => {
         assert.match(html, /Export CSV/);
         assert.match(html, /Daily Trend/);
         assert.match(html, /quiet\.sales@example\.com/);
+        assert.match(html, /LD-000001/);
+        assert.match(html, /Demo Customer One/);
+        assert.match(html, /2 leads assigned to Demo Sales Active/);
     });
 });

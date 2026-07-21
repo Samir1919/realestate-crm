@@ -26,7 +26,8 @@ const {
 } = require('./queryUtils');
 const {
     buildLeadWritePayloadFromRequest,
-    buildLeadChangedFields
+    buildLeadChangedFields,
+    buildLeadFieldChanges
 } = require('./mutationUtils');
 const {
     parseLeadPagination,
@@ -400,6 +401,7 @@ async function updateLead(req, res) {
         }
 
         const changedFields = buildLeadChangedFields(existingLead, updatePayload);
+        const fieldChanges = buildLeadFieldChanges(existingLead, updatePayload, changedFields);
 
         await Lead.findOneAndUpdate(
             {
@@ -416,6 +418,7 @@ async function updateLead(req, res) {
                 targetId: String(existingLead._id),
                 metadata: {
                     changedFields,
+                    fieldChanges,
                     status: updatePayload.status,
                     followUpDate: updatePayload.followUpDate || null
                 }

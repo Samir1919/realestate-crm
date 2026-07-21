@@ -1,7 +1,7 @@
 <div class="hidden lg:block min-w-0">
     <div class="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="w-full min-w-0 overflow-x-hidden">
-            <table class="w-full min-w-0 text-sm table-auto">
+        <div class="w-full min-w-0 overflow-x-auto">
+            <table class="w-full min-w-[1180px] text-sm table-auto">
                 <colgroup>
                     <col class="w-[42px]">
                     <col class="w-auto">
@@ -12,6 +12,7 @@
                     <col class="w-[100px]">
                     <col class="w-[150px]">
                     <col class="w-auto">
+                    <col class="w-[140px]">
                     <col class="w-[130px]">
                 </colgroup>
                 <thead>
@@ -31,6 +32,7 @@
                         <th class="text-left p-3 font-semibold">Priority</th>
                         <th class="text-left p-3 font-semibold">Employee</th>
                         <th class="text-left p-3 font-semibold">Latest Note</th>
+                        <th class="text-left p-3 font-semibold">Last Updated</th>
                         <th
                             class="text-left p-3 font-semibold sticky right-0 z-10 bg-slate-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
                             Actions</th>
@@ -119,6 +121,9 @@
                                         <%= lead.messageNote || '—' %>
                                     </span>
                                 </div>
+                            </td>
+                            <td class="p-3 align-middle min-w-0 whitespace-nowrap">
+                                <%- include('last-updated', { lead, compact: false }) %>
                             </td>
                             <td
                                 class="p-3 align-middle min-w-0 sticky right-0 z-10 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">

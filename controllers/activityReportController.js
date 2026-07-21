@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
 const User = require('../models/User');
+const { paginateRecentActivityEvents } = require('./activityReport/recentActivity');
 const {
     ACTION_LABELS,
     LEAD_ACTIVITY_ACTIONS,
@@ -94,11 +95,14 @@ async function buildActivityReportData(query) {
         score: 0
     });
 
+    const recentActivity = await paginateRecentActivityEvents(events, users, query.activityPage);
+
     return {
         filters,
         summaries,
         totals,
-        recentEvents: events.slice(0, 50),
+        recentEvents: recentActivity.recentEvents,
+        recentActivityPagination: recentActivity.pagination,
         trend: buildActivityTrend(events, filters),
         actionLabels: ACTION_LABELS,
         actionOptions: LEAD_ACTIVITY_ACTIONS.map((action) => ({

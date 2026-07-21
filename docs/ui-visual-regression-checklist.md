@@ -48,6 +48,11 @@
 - [ ] Realtime control, badges, action buttons overflow করে না
 - [ ] Card view actions mobile এ accessible
 - [ ] Filters section horizontal overflow করে না
+- [ ] Lead table ও mobile card-এ Last Updated date/time readable এবং Dhaka timezone-এ consistent
+- [ ] Narrow desktop-এ lead table horizontal scroll করলে sticky Actions column usable থাকে
+- [ ] Activity Report table-এ lead identity, role badge, action badge এবং description overlap ছাড়া render হয়
+- [ ] Bulk activity lead list expand/collapse এবং internal scroll usable থাকে
+- [ ] Recent Activity pagination active filters preserve করে
 
 ## 7) Auth Pages
 

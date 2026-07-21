@@ -1,0 +1,27 @@
+<% const leadSearchValue = lead.referenceNumber || lead.customerName || lead.id; %>
+<div class="min-w-[12rem]">
+    <% if (lead.available) { %>
+        <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+                <a href="/leads?q=<%= encodeURIComponent(leadSearchValue) %>"
+                    class="font-mono text-xs font-bold text-blue-700 hover:text-blue-800 hover:underline">
+                    <%= lead.referenceNumber || lead.id %>
+                </a>
+                <p class="mt-0.5 truncate font-semibold text-slate-900"><%= lead.customerName || 'Unnamed lead' %></p>
+                <p class="mt-0.5 text-xs text-slate-500"><%= lead.phone || 'No phone' %></p>
+            </div>
+            <a href="/leads?q=<%= encodeURIComponent(leadSearchValue) %>"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                title="Open lead in Leads" aria-label="Open <%= lead.referenceNumber || lead.customerName || 'lead' %>">
+                <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i>
+            </a>
+        </div>
+    <% } else { %>
+        <p class="text-xs font-medium text-slate-500">Lead record unavailable</p>
+        <% if (lead.id) { %>
+            <p class="mt-1 max-w-[13rem] truncate font-mono text-[11px] text-slate-400" title="<%= lead.id %>">
+                <%= lead.id %>
+            </p>
+        <% } %>
+    <% } %>
+</div>

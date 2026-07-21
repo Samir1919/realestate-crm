@@ -4,6 +4,7 @@ const {
     buildActivityTrend,
     buildDailyActivitySummary,
     createActivitySummaryCsv,
+    describeActivityEvent,
     getActivityPresetRange,
     getDhakaDateRange,
     getDhakaDayRange,
@@ -58,6 +59,28 @@ test('plain lead detail edits are low-value but still counted', () => {
 
     assert.equal(isMeaningfulEvent(event), false);
     assert.equal(scoreActivityEvent(event), 1);
+});
+
+test('activity descriptions explain changed values and bulk assignments', () => {
+    const userNames = new Map([['user-2', 'Demo Employee']]);
+    const updateDescription = describeActivityEvent({
+        action: 'leads.update',
+        metadata: {
+            changedFields: ['status', 'followUpDate'],
+            fieldChanges: {
+                status: { from: 'New', to: 'Interested' },
+                followUpDate: { from: '', to: '2026-07-22' }
+            }
+        }
+    }, userNames);
+    const bulkDescription = describeActivityEvent({
+        action: 'leads.bulk_assign',
+        metadata: { leadCount: 3, assignedUser: 'user-2' }
+    }, userNames);
+
+    assert.match(updateDescription, /status: New → Interested/);
+    assert.match(updateDescription, /follow-up date: None → 22\/07\/2026/);
+    assert.equal(bulkDescription, '3 leads assigned to Demo Employee');
 });
 
 test('Dhaka report day range uses UTC bounds for the selected local date', () => {
