@@ -14,6 +14,8 @@ function resolveIpAddress(req) {
     return String(req.ip || req.socket?.remoteAddress || '').trim();
 }
 
+const logger = require('./logger');
+
 async function logAuditEvent(req, event) {
     try {
         if (!event || !event.action) {
@@ -33,7 +35,7 @@ async function logAuditEvent(req, event) {
             metadata: event.metadata || {}
         });
     } catch (err) {
-        console.error('Audit logging failed:', err.message);
+        logger.error({ err }, 'Audit logging failed');
     }
 }
 

@@ -194,3 +194,8 @@ LeadSchema.pre('save', async function () {
 const Lead = mongoose.model('Lead', LeadSchema);
 
 module.exports = Lead;
+
+// Helpful indexes for query performance
+LeadSchema.index({ createdAt: -1 });
+LeadSchema.index({ status: 1, priority: 1 });
+LeadSchema.index({ preferredLocation: 1 });

@@ -64,11 +64,49 @@ console.error('Failed to parse lead data', err);
 }
 }
 
-function openRequestInactiveModalFromEditButton(button) {
+async function openRequestInactiveModalFromEditButton(button) {
 const leadAttr = button.getAttribute('data-lead');
 if (!leadAttr) return;
 try {
 const lead = JSON.parse(leadAttr);
+const editForm = document.getElementById('editLeadForm');
+
+if (editForm && typeof submitLeadFormAjax === 'function') {
+editForm.action = editForm.action || `/leads/update/${lead._id}`;
+const saved = await submitLeadFormAjax(editForm, { showSuccessMessage: false });
+if (!saved) {
+showPopupMessage('Save failed. ঠিক করে ঠিক করে আবার চেষ্টা করুন।', 'error');
+return;
+}
+
+// Build updated lead object from form fields
+const updatedLead = Object.assign({}, lead, {
+customerName: document.getElementById('edit_customerName')?.value || lead.customerName,
+phone: document.getElementById('edit_phone')?.value || lead.phone,
+preferredLocation: document.getElementById('edit_preferredLocation')?.value || lead.preferredLocation,
+propertyType: document.getElementById('edit_propertyType')?.value || lead.propertyType,
+budgetMin: document.getElementById('edit_budgetMin')?.value || lead.budgetMin,
+budgetMax: document.getElementById('edit_budgetMax')?.value || lead.budgetMax,
+preferredSize: document.getElementById('edit_preferredSize')?.value || lead.preferredSize,
+bedrooms: document.getElementById('edit_bedrooms')?.value || lead.bedrooms,
+purpose: document.getElementById('edit_purpose')?.value || lead.purpose,
+source: document.getElementById('edit_source')?.value || lead.source,
+assignedUser: document.getElementById('edit_assignedUser')?.value || (lead.assignedUser && (lead.assignedUser._id ||
+lead.assignedUser)),
+priority: document.getElementById('edit_priority')?.value || lead.priority,
+leadType: document.getElementById('edit_leadType')?.value || lead.leadType,
+status: document.getElementById('edit_status')?.value || lead.status,
+isActive: (document.getElementById('edit_isActive')?.value === 'false') ? false : true,
+messageNote: document.getElementById('edit_messageNote')?.value || lead.messageNote,
+followUpDate: document.getElementById('edit_followUpDate')?.value || lead.followUpDate
+});
+
+closeEditModal();
+openRequestInactiveModal(updatedLead);
+return;
+}
+
+// Fallback
 hideEditModalForFollowUpAction();
 openRequestInactiveModal(lead);
 } catch (err) {

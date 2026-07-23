@@ -24,7 +24,10 @@ const {
     ensureDefaultAccessData,
     refreshPermissionsCache
 } = require('./utils/permissions');
+const { validate } = require('./middleware/validate');
+const { loginSchema } = require('./validators/auth');
 
+const logger = require('./utils/logger');
 const app = express();
 const loginRateLimiters = createLoginRateLimiters();
 
@@ -106,7 +109,7 @@ app.get('/login', (req, res) => {
     res.render('auth/login', { error: null });
 });
 
-app.post('/login', ...loginRateLimiters, async (req, res) => {
+app.post('/login', ...loginRateLimiters, validate(loginSchema), async (req, res) => {
     try {
         const email = String(req.body.email || '').trim().toLowerCase();
         const password = String(req.body.password || '');
@@ -667,14 +670,18 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-    console.error(`❌ Server Error: ${err.stack}`);
+    logger.error({ err }, 'Server error');
+    if (err.isJoi) {
+        // Handle validation errors
+        return res.status(400).json({ error: 'Validation Error', details: err.details });
+    }
     res.status(500).send('Something went wrong on the server!');
 });
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
-    console.log(`💻 CRM Server running on http://${HOST}:${PORT}`);
+    logger.info({ host: HOST, port: PORT, env: process.env.NODE_ENV }, 'CRM Server started');
 });
 
 // Daily lead export (email)
